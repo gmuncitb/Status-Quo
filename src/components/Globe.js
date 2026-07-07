@@ -201,43 +201,18 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('d', path)
       .attr('fill', (d) => {
         const code = numericToAlpha3[d.id];
-        if (code === hoveredCountry) {
-          return highlightedCodes[code] ? '#1c1c1c' : '#c8c8c8'; // Medium gray on hover for unhighlighted regional countries
-        }
         return highlightedCodes[code] || '#dddddd';
       })
       .attr('stroke', (d) => {
         const code = numericToAlpha3[d.id];
-        if (code === hoveredCountry) return '#000000';
         return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
       })
       .attr('stroke-width', (d) => {
         const code = numericToAlpha3[d.id];
-        if (code === hoveredCountry) return 1.5;
         return highlightedCodes[code] ? 1 : 0.5;
       })
-      .attr('transform', (d) => {
-        const code = numericToAlpha3[d.id];
-        if (code === hoveredCountry) {
-          const centroid = d3.geoCentroid(d);
-          const projected = projection(centroid);
-          if (projected) {
-            const dx = projected[0] - internalWidth / 2;
-            const dy = projected[1] - internalHeight / 2;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            if (len > 0) {
-              const tx = (dx / len) * 8; // Lift outward by 8px
-              const ty = (dy / len) * 8;
-              return `translate(${tx}, ${ty})`;
-            }
-          }
-        }
-        return 'translate(0, 0)';
-      })
-      .attr('filter', (d) => {
-        const code = numericToAlpha3[d.id];
-        return code === hoveredCountry ? 'url(#hover-shadow)' : 'none';
-      })
+      .attr('transform', 'translate(0, 0)')
+      .attr('filter', 'none')
       .style('cursor', (d) => {
         const code = numericToAlpha3[d.id];
         return regionCountryCodes.has(code) ? 'pointer' : 'default';
@@ -278,14 +253,64 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 1);
 
-  }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3, hoveredCountry, onHoverCountry, onClickCountry]);
+  }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3, onHoverCountry, onClickCountry]);
 
-  // Re-run D3 rendering when styling states change
+  // Re-run D3 rendering when styling/data states change (excludes hoveredCountry to prevent DOM rebuilding)
   useEffect(() => {
     if (worldDataRef.current) {
       renderGlobe();
     }
-  }, [rotation, scale, highlightedCodes, hoveredCountry, renderGlobe]);
+  }, [rotation, scale, highlightedCodes, renderGlobe]);
+
+  // Update hover styling dynamically in the DOM (allows smooth CSS transform & drop-shadow transitions)
+  useEffect(() => {
+    if (!svgRef.current || !worldDataRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+    
+    svg.selectAll('.globe-land')
+      .each(function(d) {
+        const code = numericToAlpha3[d.id];
+        const isHovered = code === hoveredCountry;
+        const pathSelection = d3.select(this);
+
+        if (isHovered) {
+          // Calculate lift displacement vector from center of the globe
+          const centroid = d3.geoCentroid(d);
+          const projection = d3
+            .geoOrthographic()
+            .scale(scale)
+            .translate([internalWidth / 2, internalHeight / 2])
+            .clipAngle(90)
+            .rotate(rotation);
+
+          const projected = projection(centroid);
+          if (projected) {
+            const dx = projected[0] - internalWidth / 2;
+            const dy = projected[1] - internalHeight / 2;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 0) {
+              const tx = (dx / len) * 8; // Lift outward by 8px
+              const ty = (dy / len) * 8;
+              pathSelection.attr('transform', `translate(${tx}, ${ty})`);
+            }
+          }
+          pathSelection
+            .attr('fill', highlightedCodes[code] ? '#1c1c1c' : '#c8c8c8')
+            .attr('stroke', '#000000')
+            .attr('stroke-width', 1.5)
+            .attr('filter', 'url(#hover-shadow)')
+            .raise();
+        } else {
+          pathSelection
+            .attr('transform', 'translate(0, 0)')
+            .attr('filter', 'none')
+            .attr('fill', highlightedCodes[code] || '#dddddd')
+            .attr('stroke', highlightedCodes[code] ? '#ffffff' : '#f0f0f0')
+            .attr('stroke-width', highlightedCodes[code] ? 1 : 0.5);
+        }
+      });
+  }, [hoveredCountry, scale, rotation, highlightedCodes, numericToAlpha3]);
 
   // Compute callout positions dynamically on every animation frame
   const calloutPositions = useMemo(() => {
