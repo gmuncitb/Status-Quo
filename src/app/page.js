@@ -121,7 +121,7 @@ export default function Home() {
             <Globe
               region={region}
               newsItems={newsItems}
-              canvasSize={640}
+              canvasSize={760}
               hoveredCountry={hoveredCountry}
               onHoverCountry={setHoveredCountry}
               onClickCountry={handleCountryClick}
@@ -168,11 +168,11 @@ export default function Home() {
 
       {/* Hidden container for exporting un-cropped full globe */}
       <div style={{ position: 'absolute', top: -9999, left: -9999, pointerEvents: 'none' }}>
-        <div id="globe-export-target" style={{ width: 640, height: 640, backgroundColor: '#fafafa', position: 'relative' }}>
+        <div id="globe-export-target" style={{ width: 760, height: 760, backgroundColor: '#fafafa', position: 'relative' }}>
           <Globe
             region={{ ...region, scale: 0.95 }} // Reset scale to 0.95 for export to ensure full sphere is visible
             newsItems={newsItems}
-            canvasSize={640}
+            canvasSize={760}
             hoveredCountry={null}
             isExportMode={true}
             draggedOffsets={draggedOffsets}
