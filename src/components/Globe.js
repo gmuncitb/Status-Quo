@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import { getFlagUrl } from '@/lib/flags';
@@ -12,7 +12,7 @@ const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110
  * Takes an array of { x, y, ... } positions and returns adjusted positions
  * so that boxes don't overlap each other.
  */
-function resolveCollisions(items, boxWidth = 140, boxHeight = 52, canvasSize = 600) {
+function resolveCollisions(items, boxWidth = 160, boxHeight = 44, canvasSize = 600) {
   if (items.length === 0) return items;
 
   const adjusted = items.map((item) => ({ ...item, adjX: item.x, adjY: item.y }));
@@ -20,10 +20,10 @@ function resolveCollisions(items, boxWidth = 140, boxHeight = 52, canvasSize = 6
   // Sort by y position for stable layout
   adjusted.sort((a, b) => a.y - b.y);
 
-  const padding = 6;
+  const padding = 8;
 
   // Multiple passes to resolve overlaps
-  for (let pass = 0; pass < 10; pass++) {
+  for (let pass = 0; pass < 12; pass++) {
     let moved = false;
     for (let i = 0; i < adjusted.length; i++) {
       for (let j = i + 1; j < adjusted.length; j++) {
@@ -54,15 +54,20 @@ function resolveCollisions(items, boxWidth = 140, boxHeight = 52, canvasSize = 6
   return adjusted;
 }
 
-export default function Globe({ region, newsItems, canvasSize = 600, hoveredCountry, onHoverCountry }) {
+export default function Globe({ region, newsItems, canvasSize = 480, hoveredCountry, onHoverCountry }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
-  const projectionRef = useRef(null);
-  const pathRef = useRef(null);
 
-  const globeRadius = (canvasSize / 2) - 20;
+  // Constants for fixed D3 rendering coordinate space
+  const internalWidth = 800;
+  const internalHeight = 800;
+  const baseGlobeRadius = 140;
 
-  // Load world topology data
+  // Animatable states for rotation and scale (synchronized across SVG paths and HTML callouts)
+  const [rotation, setRotation] = useState(region.rotation);
+  const [scale, setScale] = useState(baseGlobeRadius * (region.scale || 1.0));
+
+  // Load world topology data once on mount
   useEffect(() => {
     d3.json(WORLD_TOPO_URL).then((world) => {
       worldDataRef.current = world;
@@ -70,7 +75,48 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
     });
   }, []);
 
-  // Build a set of highlighted country codes from newsItems
+  // Animate rotation and scale transitions via requestAnimationFrame loop (React-state driven)
+  useEffect(() => {
+    const targetRotation = region.rotation;
+    const targetScale = baseGlobeRadius * (region.scale || 1.0);
+
+    const startRotation = [...rotation];
+    const startScale = scale;
+
+    const duration = 750; // ms
+    const startTime = performance.now();
+    let animId;
+
+    // Helper for shortest path rotation interpolation
+    const interpolateRotation = (start, end, t) => {
+      return [
+        start[0] + (end[0] - start[0]) * t,
+        start[1] + (end[1] - start[1]) * t,
+        start[2] + (end[2] - start[2]) * t
+      ];
+    };
+
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // Cubic Out
+
+      const nextRotation = interpolateRotation(startRotation, targetRotation, ease);
+      const nextScale = startScale + (targetScale - startScale) * ease;
+
+      setRotation(nextRotation);
+      setScale(nextScale);
+
+      if (progress < 1) {
+        animId = requestAnimationFrame(animate);
+      }
+    };
+
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, [region]);
+
+  // Build highlighted country lookup
   const highlightedCodes = useMemo(() => {
     const map = {};
     for (const item of newsItems) {
@@ -79,64 +125,43 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
     return map;
   }, [newsItems]);
 
-  // Mapping from numeric country IDs (used in topojson) to ISO alpha-3 codes
-  // We use a lookup based on the Natural Earth / ISO standard
   const numericToAlpha3 = useMemo(() => {
     return buildNumericToAlpha3();
   }, []);
 
+  // Main D3 render routine
   const renderGlobe = useCallback(() => {
     if (!svgRef.current || !worldDataRef.current) return;
 
     const svg = d3.select(svgRef.current);
     const world = worldDataRef.current;
 
-    const width = canvasSize;
-    const height = canvasSize;
+    // Set up orthographic projection with animated scale & rotation states
+    const projection = d3
+      .geoOrthographic()
+      .scale(scale)
+      .translate([internalWidth / 2, internalHeight / 2])
+      .clipAngle(90)
+      .rotate(rotation);
 
-    // Set up projection
-    if (!projectionRef.current) {
-      projectionRef.current = d3
-        .geoOrthographic()
-        .scale(globeRadius * (region.scale || 1.0))
-        .translate([width / 2, height / 2])
-        .clipAngle(90)
-        .rotate(region.rotation);
-    }
-
-    const projection = projectionRef.current;
     const path = d3.geoPath().projection(projection);
-    pathRef.current = path;
 
-    // Extract features
     const countries = topojson.feature(world, world.objects.countries);
     const borders = topojson.mesh(world, world.objects.countries, (a, b) => a !== b);
 
     // Clear and redraw
     svg.selectAll('*').remove();
+    const g = svg.append('g');
 
-    // Create defs and clipPath for zooming
-    const defs = svg.append('defs');
-    defs.append('clipPath')
-      .attr('id', 'globe-clip')
-      .append('circle')
-      .attr('cx', width / 2)
-      .attr('cy', height / 2)
-      .attr('r', globeRadius);
-
-    // Group with clip-path
-    const g = svg.append('g')
-      .attr('clip-path', 'url(#globe-clip)');
-
-    // Water (globe background) — drawn first inside the clip
+    // Water background — grows with the scale
     g.append('circle')
-      .attr('cx', width / 2)
-      .attr('cy', height / 2)
-      .attr('r', globeRadius)
+      .attr('cx', internalWidth / 2)
+      .attr('cy', internalHeight / 2)
+      .attr('r', scale)
       .attr('fill', '#ffffff')
       .attr('stroke', 'none');
 
-    // Graticule
+    // Graticule grid
     const graticule = d3.geoGraticule();
     g.append('path')
       .datum(graticule())
@@ -145,7 +170,7 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
       .attr('stroke', '#eeeeee')
       .attr('stroke-width', 0.3);
 
-    // Countries
+    // Landmasses
     g.selectAll('.globe-land')
       .data(countries.features)
       .enter()
@@ -182,7 +207,7 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
         }
       });
 
-    // Borders
+    // Country borders
     g.append('path')
       .datum(borders)
       .attr('d', path)
@@ -190,99 +215,84 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 0.3);
 
-    // Globe outline (outside of clip group for crisp stroke boundary)
+    // Globe sphere outline — grows with the scale
     svg.append('circle')
-      .attr('cx', width / 2)
-      .attr('cy', height / 2)
-      .attr('r', globeRadius)
+      .attr('cx', internalWidth / 2)
+      .attr('cy', internalHeight / 2)
+      .attr('r', scale)
       .attr('fill', 'none')
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 1);
-  }, [region, highlightedCodes, canvasSize, numericToAlpha3, hoveredCountry, onHoverCountry, globeRadius]);
 
-  // Re-render when highlighted countries or hovered status change
+  }, [rotation, scale, highlightedCodes, numericToAlpha3, hoveredCountry, onHoverCountry]);
+
+  // Re-run D3 rendering when styling states change
   useEffect(() => {
     if (worldDataRef.current) {
       renderGlobe();
     }
-  }, [highlightedCodes, hoveredCountry, renderGlobe]);
+  }, [rotation, scale, highlightedCodes, hoveredCountry, renderGlobe]);
 
-  // Animate rotation and zoom when region changes
-  useEffect(() => {
-    if (!projectionRef.current || !worldDataRef.current) return;
-
-    const projection = projectionRef.current;
-    const currentRotation = projection.rotate();
-    const targetRotation = region.rotation;
-
-    const currentScale = projection.scale();
-    const targetScale = globeRadius * (region.scale || 1.0);
-
-    const interpolateRotation = d3.interpolate(currentRotation, targetRotation);
-    const interpolateScale = d3.interpolate(currentScale, targetScale);
-
-    d3.transition()
-      .duration(1000)
-      .ease(d3.easeCubicInOut)
-      .tween('rotate-and-scale', () => {
-        return (t) => {
-          projection.rotate(interpolateRotation(t));
-          projection.scale(interpolateScale(t));
-          renderGlobe();
-        };
-      });
-  }, [region, renderGlobe, globeRadius]);
-
-  // Compute callout positions from country centroids
+  // Compute callout positions dynamically on every animation frame
   const calloutPositions = useMemo(() => {
-    if (!projectionRef.current || !worldDataRef.current || newsItems.length === 0) {
+    if (!worldDataRef.current || newsItems.length === 0) {
       return [];
     }
 
     const world = worldDataRef.current;
-    const projection = projectionRef.current;
-    const countries = topojson.feature(world, world.objects.countries);
+    
+    // Virtual projection matching current animation frame
+    const tempProjection = d3
+      .geoOrthographic()
+      .scale(scale)
+      .translate([internalWidth / 2, internalHeight / 2])
+      .clipAngle(90)
+      .rotate(rotation);
 
+    const countries = topojson.feature(world, world.objects.countries);
     const positions = [];
+
     for (const item of newsItems) {
       const numId = alpha3ToNumeric(item.countryCode);
       const feature = countries.features.find((f) => String(f.id) === String(numId));
 
       if (feature) {
         const centroid = d3.geoCentroid(feature);
-        const projected = projection(centroid);
+        const projected = tempProjection(centroid);
 
         if (projected) {
-          // Check if the point is on the visible side of the globe
-          const dist = d3.geoDistance(centroid, projection.invert([canvasSize / 2, canvasSize / 2]));
+          const dist = d3.geoDistance(centroid, tempProjection.invert([internalWidth / 2, internalHeight / 2]));
           if (dist < Math.PI / 2) {
+            // Map 800x800 internal coordinates to canvasSize screen pixels
+            const scaleFactor = canvasSize / internalWidth;
             positions.push({
               ...item,
-              x: projected[0],
-              y: projected[1],
-              centroidX: projected[0],
-              centroidY: projected[1],
+              x: projected[0] * scaleFactor,
+              y: projected[1] * scaleFactor,
+              centroidX: projected[0] * scaleFactor,
+              centroidY: projected[1] * scaleFactor,
             });
           }
         }
       }
     }
 
-    return resolveCollisions(positions, 140, 52, canvasSize);
-  }, [newsItems, region, canvasSize]);
+    return resolveCollisions(positions, 160, 44, canvasSize);
+  }, [newsItems, rotation, scale, canvasSize]);
 
   return (
     <div className="globe-canvas" id="globe-export-target" style={{ width: canvasSize, height: canvasSize }}>
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${canvasSize} ${canvasSize}`}
-        width={canvasSize}
-        height={canvasSize}
+        viewBox={`0 0 ${internalWidth} ${internalHeight}`}
+        width="100%"
+        height="100%"
+        style={{ overflow: 'visible' }}
       />
 
-      {/* SVG overlay for leader lines */}
+      {/* SVG overlay for dynamic leader lines */}
       <svg
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}
         viewBox={`0 0 ${canvasSize} ${canvasSize}`}
       >
         {calloutPositions.map((item) => (
@@ -291,18 +301,18 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
             x1={item.centroidX}
             y1={item.centroidY}
             x2={item.adjX + 80} // Center of 160px wide box
-            y2={item.adjY + 22} // Vertical center of header area roughly
+            y2={item.adjY + 22} // Vertical center of box
             stroke={item.color}
             strokeWidth={hoveredCountry === item.countryCode ? 1.8 : 1.2}
             fill="none"
             opacity={hoveredCountry === item.countryCode ? 0.8 : 0.4}
-            transition="stroke-width 150ms ease, opacity 150ms ease"
+            style={{ transition: 'stroke-width 150ms ease, opacity 150ms ease' }}
           />
         ))}
       </svg>
 
-      {/* Dots on country centroids */}
-      <div className="callout-container">
+      {/* Centroid dots */}
+      <div className="callout-container" style={{ overflow: 'visible' }}>
         {calloutPositions.map((item) => (
           <div
             key={`dot-${item.countryCode}`}
@@ -319,7 +329,7 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
       </div>
 
       {/* Floating callout boxes */}
-      <div className="callout-container">
+      <div className="callout-container" style={{ overflow: 'visible' }}>
         {calloutPositions.map((item) => {
           const flagUrl = getFlagUrl(item.countryCode);
           const isHovered = hoveredCountry === item.countryCode;
@@ -363,10 +373,6 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
   );
 }
 
-/**
- * Map from ISO numeric country codes to ISO alpha-3 codes
- * Covers most countries used in the Natural Earth / world-atlas topojson
- */
 function buildNumericToAlpha3() {
   return {
     '4': 'AFG', '8': 'ALB', '12': 'DZA', '20': 'AND', '24': 'AGO',
@@ -410,9 +416,6 @@ function buildNumericToAlpha3() {
   };
 }
 
-/**
- * Reverse lookup: alpha-3 code to numeric ID
- */
 function alpha3ToNumeric(alpha3) {
   const map = buildNumericToAlpha3();
   for (const [num, code] of Object.entries(map)) {
