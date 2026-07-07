@@ -66,8 +66,7 @@ export default function Home() {
 
     try {
       const blob = await toBlob(node, {
-        pixelRatio: 3,
-        backgroundColor: '#fafafa',
+        pixelRatio: 2, // 2x pixel ratio for high resolution output
       });
 
       if (blob) {
@@ -168,11 +167,11 @@ export default function Home() {
 
       {/* Hidden container for exporting un-cropped full globe */}
       <div style={{ position: 'absolute', top: -9999, left: -9999, pointerEvents: 'none' }}>
-        <div id="globe-export-target" style={{ width: 760, height: 760, backgroundColor: '#fafafa', position: 'relative' }}>
+        <div id="globe-export-target" style={{ width: 1140, height: 1140, background: 'transparent', position: 'relative' }}>
           <Globe
             region={{ ...region, scale: 0.95 }} // Reset scale to 0.95 for export to ensure full sphere is visible
             newsItems={newsItems}
-            canvasSize={760}
+            canvasSize={1140}
             hoveredCountry={null}
             isExportMode={true}
             draggedOffsets={draggedOffsets}
