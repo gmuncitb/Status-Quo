@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import REGIONS from '@/lib/regions';
 import CALLOUT_COLORS from '@/lib/colors';
 import { getFlagUrl } from '@/lib/flags';
@@ -27,6 +27,19 @@ function Flag({ code, size = 18 }) {
 export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hoveredCountry, onHoverCountry, isMinimized, onMinimizeChange }) {
   const [selectedCountry, setSelectedCountry] = useState('');
   const region = REGIONS[activeRegion];
+
+  // Compile full sorted list of all countries in the world for relationship mapping
+  const allWorldCountries = useMemo(() => {
+    const list = [];
+    Object.values(REGIONS).forEach((r) => {
+      r.countries.forEach((c) => {
+        if (!list.some((existing) => existing.code === c.code)) {
+          list.push(c);
+        }
+      });
+    });
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, []);
 
   // Get countries not yet added
   const availableCountries = region.countries.filter(
@@ -127,6 +140,63 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                       }
                     />
                   ))}
+                </div>
+
+                {/* Geopolitical Affected Relations Editor */}
+                <div className="affected-section">
+                  <div className="affected-title">Affected Relations</div>
+                  <div className="affected-list">
+                    {(item.affected || []).map((rel) => (
+                      <div key={rel.countryCode} className="affected-item">
+                        <Flag code={rel.countryCode} size={14} />
+                        <span style={{ marginLeft: '2px', marginRight: '4px' }}>{rel.countryCode}</span>
+                        <button
+                          className={`btn-relation-toggle ${rel.type}`}
+                          onClick={() => {
+                            const nextType = rel.type === 'improve' ? 'deteriorate' : 'improve';
+                            const updatedAffected = item.affected.map((r) =>
+                              r.countryCode === rel.countryCode ? { ...r, type: nextType } : r
+                            );
+                            updateNewsItem(item.countryCode, 'affected', updatedAffected);
+                          }}
+                          title={rel.type === 'improve' ? 'Improves Relationship (Click to Deteriorate)' : 'Deteriorates Relationship (Click to Improve)'}
+                        >
+                          {rel.type === 'improve' ? '▲' : '▼'}
+                        </button>
+                        <button
+                          className="btn-relation-remove"
+                          onClick={() => {
+                            const updatedAffected = item.affected.filter((r) => r.countryCode !== rel.countryCode);
+                            updateNewsItem(item.countryCode, 'affected', updatedAffected);
+                          }}
+                          title="Remove Relation"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <select
+                    className="add-affected-select"
+                    value=""
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      const updatedAffected = [
+                        ...(item.affected || []),
+                        { countryCode: e.target.value, type: 'improve' },
+                      ];
+                      updateNewsItem(item.countryCode, 'affected', updatedAffected);
+                    }}
+                  >
+                    <option value="">+ Add affected country...</option>
+                    {allWorldCountries
+                      .filter((c) => c.code !== item.countryCode && !(item.affected || []).some((r) => r.countryCode === c.code))
+                      .map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name} ({c.code})
+                        </option>
+                      ))}
+                  </select>
                 </div>
               </div>
             ))}

@@ -12,10 +12,15 @@ const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110
  * Takes an array of { x, y, ... } positions and returns adjusted positions
  * so that boxes don't overlap each other.
  */
-function resolveCollisions(items, boxWidth = 160, boxHeight = 44, canvasSize = 600) {
+function resolveCollisions(items, boxWidth = 160, defaultHeight = 44, canvasSize = 600) {
   if (items.length === 0) return items;
 
-  const adjusted = items.map((item) => ({ ...item, adjX: item.x, adjY: item.y }));
+  const adjusted = items.map((item) => ({ 
+    ...item, 
+    height: item.affected && item.affected.length > 0 ? 66 : 44, // Expand box collision height if relationships are present
+    adjX: item.x, 
+    adjY: item.y 
+  }));
 
   // Sort by y position for stable layout
   adjusted.sort((a, b) => a.y - b.y);
@@ -30,11 +35,14 @@ function resolveCollisions(items, boxWidth = 160, boxHeight = 44, canvasSize = 6
         const a = adjusted[i];
         const b = adjusted[j];
 
+        const hA = a.height || defaultHeight;
+        const hB = b.height || defaultHeight;
+
         const overlapX = Math.abs(a.adjX - b.adjX) < boxWidth + padding;
-        const overlapY = Math.abs(a.adjY - b.adjY) < boxHeight + padding;
+        const overlapY = Math.abs(a.adjY - b.adjY) < (hA + hB) / 2 + padding;
 
         if (overlapX && overlapY) {
-          const pushY = (boxHeight + padding - Math.abs(a.adjY - b.adjY)) / 2;
+          const pushY = ((hA + hB) / 2 + padding - Math.abs(a.adjY - b.adjY)) / 2;
           a.adjY -= pushY;
           b.adjY += pushY;
           moved = true;
@@ -44,8 +52,9 @@ function resolveCollisions(items, boxWidth = 160, boxHeight = 44, canvasSize = 6
 
     // Clamp within canvas bounds
     for (const item of adjusted) {
+      const h = item.height || defaultHeight;
       item.adjX = Math.max(8, Math.min(canvasSize - boxWidth - 8, item.adjX));
-      item.adjY = Math.max(8, Math.min(canvasSize - boxHeight - 8, item.adjY));
+      item.adjY = Math.max(8, Math.min(canvasSize - h - 8, item.adjY));
     }
 
     if (!moved) break;
@@ -466,6 +475,38 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
                 <div className="callout-box-title">{item.countryName}</div>
               </div>
               <div className="callout-box-text">{item.newsText}</div>
+              {item.affected && item.affected.length > 0 && (
+                <div className="callout-relations">
+                  {item.affected.map((rel) => {
+                    const relFlagUrl = getFlagUrl(rel.countryCode);
+                    return (
+                      <div
+                        key={rel.countryCode}
+                        className={`callout-rel-pill ${rel.type}`}
+                        title={`${rel.countryCode} relationship ${rel.type === 'improve' ? 'improves' : 'deteriorates'}`}
+                      >
+                        {relFlagUrl && (
+                          <img
+                            src={relFlagUrl}
+                            alt=""
+                            style={{
+                              width: 10,
+                              height: 7,
+                              objectFit: 'cover',
+                              borderRadius: 0.5,
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <span>{rel.countryCode}</span>
+                        <span className="callout-rel-arrow">
+                          {rel.type === 'improve' ? '▲' : '▼'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
