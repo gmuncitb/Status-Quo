@@ -66,6 +66,7 @@ function resolveCollisions(items, boxWidth = 160, defaultHeight = 44, canvasSize
 export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry, isExportMode = false }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
+  const prevHoveredRef = useRef(null); // Track previously hovered country code for O(1) updates
 
   // Sync event handlers to refs to prevent D3 render loop invalidation from parent prop shifts
   const onHoverCountryRef = useRef(onHoverCountry);
@@ -169,108 +170,146 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
 
     const path = d3.geoPath().projection(projection);
 
-    const countries = topojson.feature(world, world.objects.countries);
-    const borders = topojson.mesh(world, world.objects.countries, (a, b) => a !== b);
+    // Check if the globe has already been initialized (has a class container)
+    let g = svg.select('g.globe-group');
+    
+    if (g.empty()) {
+      // Clear legacy contents (if any)
+      svg.selectAll('*').remove();
 
-    // Clear and redraw
-    svg.selectAll('*').remove();
+      // Create defs and add drop-shadow filter for 3D hover effect
+      const defs = svg.append('defs');
+      const filter = defs.append('filter')
+        .attr('id', 'hover-shadow')
+        .attr('x', '-30%')
+        .attr('y', '-30%')
+        .attr('width', '160%')
+        .attr('height', '160%');
 
-    // Create defs and add drop-shadow filter for 3D hover effect
-    const defs = svg.append('defs');
-    const filter = defs.append('filter')
-      .attr('id', 'hover-shadow')
-      .attr('x', '-30%')
-      .attr('y', '-30%')
-      .attr('width', '160%')
-      .attr('height', '160%');
+      filter.append('feDropShadow')
+        .attr('dx', 2)
+        .attr('dy', 4)
+        .attr('stdDeviation', 3)
+        .attr('flood-opacity', 0.22)
+        .attr('flood-color', '#000000');
 
-    filter.append('feDropShadow')
-      .attr('dx', 2)
-      .attr('dy', 4)
-      .attr('stdDeviation', 3)
-      .attr('flood-opacity', 0.22)
-      .attr('flood-color', '#000000');
+      g = svg.append('g').attr('class', 'globe-group');
 
-    const g = svg.append('g');
+      // Water background — grows with the scale
+      g.append('circle')
+        .attr('class', 'globe-water')
+        .attr('cx', internalWidth / 2)
+        .attr('cy', internalHeight / 2)
+        .attr('r', scale)
+        .attr('fill', '#ffffff')
+        .attr('stroke', 'none');
 
-    // Water background — grows with the scale
-    g.append('circle')
-      .attr('cx', internalWidth / 2)
-      .attr('cy', internalHeight / 2)
-      .attr('r', scale)
-      .attr('fill', '#ffffff')
-      .attr('stroke', 'none');
+      // Graticule grid
+      const graticule = d3.geoGraticule();
+      g.append('path')
+        .datum(graticule())
+        .attr('class', 'globe-graticule')
+        .attr('d', path)
+        .attr('fill', 'none')
+        .attr('stroke', '#eeeeee')
+        .attr('stroke-width', 0.3);
 
-    // Graticule grid
-    const graticule = d3.geoGraticule();
-    g.append('path')
-      .datum(graticule())
-      .attr('d', path)
-      .attr('fill', 'none')
-      .attr('stroke', '#eeeeee')
-      .attr('stroke-width', 0.3);
+      const countries = topojson.feature(world, world.objects.countries);
+      const borders = topojson.mesh(world, world.objects.countries, (a, b) => a !== b);
 
-    // Landmasses
-    g.selectAll('.globe-land')
-      .data(countries.features)
-      .enter()
-      .append('path')
-      .attr('class', 'globe-land')
-      .attr('d', path)
-      .attr('fill', (d) => {
-        const code = numericToAlpha3[Number(d.id)];
-        return highlightedCodes[code] || '#dddddd';
-      })
-      .attr('stroke', (d) => {
-        const code = numericToAlpha3[Number(d.id)];
-        return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
-      })
-      .attr('stroke-width', (d) => {
-        const code = numericToAlpha3[Number(d.id)];
-        return highlightedCodes[code] ? 1 : 0.5;
-      })
-      .attr('transform', 'translate(0, 0)')
-      .attr('filter', 'none')
-      .style('cursor', (d) => {
-        const code = numericToAlpha3[Number(d.id)];
-        return regionCountryCodes.has(code) ? 'pointer' : 'default';
-      })
-      .on('mouseenter', function (event, d) {
-        const code = numericToAlpha3[Number(d.id)];
-        if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
-          onHoverCountryRef.current(code);
-          d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
-        }
-      })
-      .on('mouseleave', () => {
-        if (onHoverCountryRef.current) {
-          onHoverCountryRef.current(null);
-        }
-      })
-      .on('click', (event, d) => {
-        const code = numericToAlpha3[Number(d.id)];
-        if (regionCountryCodes.has(code) && onClickCountryRef.current) {
-          onClickCountryRef.current(code);
-        }
-      });
+      // Landmasses
+      g.selectAll('.globe-land')
+        .data(countries.features)
+        .enter()
+        .append('path')
+        .attr('class', 'globe-land')
+        .attr('id', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return code ? `land-${code}` : null;
+        })
+        .attr('d', path)
+        .attr('fill', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return highlightedCodes[code] || '#dddddd';
+        })
+        .attr('stroke', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
+        })
+        .attr('stroke-width', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return highlightedCodes[code] ? 1 : 0.5;
+        })
+        .attr('transform', 'translate(0, 0)')
+        .attr('filter', 'none')
+        .style('cursor', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return regionCountryCodes.has(code) ? 'pointer' : 'default';
+        })
+        .on('mouseenter', function (event, d) {
+          const code = numericToAlpha3[Number(d.id)];
+          if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
+            onHoverCountryRef.current(code);
+            d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
+          }
+        })
+        .on('mouseleave', () => {
+          if (onHoverCountryRef.current) {
+            onHoverCountryRef.current(null);
+          }
+        })
+        .on('click', (event, d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          if (regionCountryCodes.has(code) && onClickCountryRef.current) {
+            onClickCountryRef.current(code);
+          }
+        });
 
-    // Country borders
-    g.append('path')
-      .datum(borders)
-      .attr('d', path)
-      .attr('fill', 'none')
-      .attr('stroke', '#bbbbbb')
-      .attr('stroke-width', 0.3);
+      // Country borders
+      g.append('path')
+        .datum(borders)
+        .attr('class', 'globe-borders')
+        .attr('d', path)
+        .attr('fill', 'none')
+        .attr('stroke', '#bbbbbb')
+        .attr('stroke-width', 0.3);
 
-    // Globe outline (outside of clip group for crisp stroke boundary)
-    svg.append('circle')
-      .attr('cx', internalWidth / 2)
-      .attr('cy', internalHeight / 2)
-      .attr('r', scale)
-      .attr('fill', 'none')
-      .attr('stroke', '#bbbbbb')
-      .attr('stroke-width', 1);
+      // Globe outline (outside of clip group for crisp stroke boundary)
+      svg.append('circle')
+        .attr('class', 'globe-outline')
+        .attr('cx', internalWidth / 2)
+        .attr('cy', internalHeight / 2)
+        .attr('r', scale)
+        .attr('fill', 'none')
+        .attr('stroke', '#bbbbbb')
+        .attr('stroke-width', 1);
+    } else {
+      // Dynamic in-place O(N) updates of existing DOM elements, extremely fast
+      g.select('.globe-water').attr('r', scale);
+      g.select('.globe-graticule').attr('d', path);
+      g.selectAll('.globe-land').attr('d', path);
+      g.select('.globe-borders').attr('d', path);
+      svg.select('.globe-outline').attr('r', scale);
 
+      // Update fill, stroke & cursor dynamically (avoids re-binding events)
+      g.selectAll('.globe-land')
+        .attr('fill', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return highlightedCodes[code] || '#dddddd';
+        })
+        .attr('stroke', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
+        })
+        .attr('stroke-width', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return highlightedCodes[code] ? 1 : 0.5;
+        })
+        .style('cursor', (d) => {
+          const code = numericToAlpha3[Number(d.id)];
+          return regionCountryCodes.has(code) ? 'pointer' : 'default';
+        });
+    }
   }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3]);
 
   // Re-run D3 rendering when styling/data states change (excludes hoveredCountry to prevent DOM rebuilding)
@@ -281,18 +320,35 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
   }, [rotation, scale, highlightedCodes, renderGlobe]);
 
   // Update hover styling dynamically in the DOM (allows smooth CSS transform & drop-shadow transitions)
+  // Highly optimized O(1) in-place transition updates targeting only the changed country paths
   useEffect(() => {
     if (!svgRef.current || !worldDataRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    
-    svg.selectAll('.globe-land')
-      .each(function(d) {
-        const code = numericToAlpha3[Number(d.id)];
-        const isHovered = code === hoveredCountry;
-        const pathSelection = d3.select(this);
+    const prev = prevHoveredRef.current;
+    const curr = hoveredCountry;
 
-        if (isHovered) {
+    if (prev === curr) return;
+
+    // Reset previously hovered country
+    if (prev) {
+      const prevPath = svg.select(`#land-${prev}`);
+      if (!prevPath.empty()) {
+        prevPath
+          .attr('transform', 'translate(0, 0)')
+          .attr('filter', 'none')
+          .attr('fill', highlightedCodes[prev] || '#dddddd')
+          .attr('stroke', highlightedCodes[prev] ? '#ffffff' : '#f0f0f0')
+          .attr('stroke-width', highlightedCodes[prev] ? 1 : 0.5);
+      }
+    }
+
+    // Apply hover styling to newly hovered country
+    if (curr) {
+      const currPath = svg.select(`#land-${curr}`);
+      if (!currPath.empty()) {
+        const d = currPath.datum();
+        if (d) {
           // Calculate lift displacement vector from center of the globe
           const centroid = d3.geoCentroid(d);
           const projection = d3
@@ -310,24 +366,20 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
             if (len > 0) {
               const tx = (dx / len) * 8; // Lift outward by 8px
               const ty = (dy / len) * 8;
-              pathSelection.attr('transform', `translate(${tx}, ${ty})`);
+              currPath.attr('transform', `translate(${tx}, ${ty})`);
             }
           }
-          pathSelection
-            .attr('fill', highlightedCodes[code] ? '#1c1c1c' : '#c8c8c8')
+          currPath
+            .attr('fill', highlightedCodes[curr] ? '#1c1c1c' : '#c8c8c8')
             .attr('stroke', '#000000')
             .attr('stroke-width', 1.5)
             .attr('filter', 'url(#hover-shadow)')
             .raise();
-        } else {
-          pathSelection
-            .attr('transform', 'translate(0, 0)')
-            .attr('filter', 'none')
-            .attr('fill', highlightedCodes[code] || '#dddddd')
-            .attr('stroke', highlightedCodes[code] ? '#ffffff' : '#f0f0f0')
-            .attr('stroke-width', highlightedCodes[code] ? 1 : 0.5);
         }
-      });
+      }
+    }
+
+    prevHoveredRef.current = curr;
   }, [hoveredCountry, scale, rotation, highlightedCodes, numericToAlpha3]);
 
   // Compute callout positions dynamically on every animation frame
