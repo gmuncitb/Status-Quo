@@ -204,6 +204,12 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
     return buildNumericToAlpha3();
   }, []);
 
+  const getCountryCode = useCallback((id) => {
+    if (!id) return null;
+    const numId = isNaN(Number(id)) ? id : String(Number(id));
+    return numericToAlpha3[numId] || null;
+  }, [numericToAlpha3]);
+
   // Main D3 render routine
   const renderGlobe = useCallback(() => {
     if (!svgRef.current || !worldDataRef.current) return;
@@ -270,25 +276,25 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
       .attr('class', 'globe-land')
       .attr('d', path)
       .attr('fill', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         return highlightedCodes[code] || '#dddddd';
       })
       .attr('stroke', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
       })
       .attr('stroke-width', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         return highlightedCodes[code] ? 1 : 0.5;
       })
       .attr('transform', 'translate(0, 0)')
       .attr('filter', 'none')
       .style('cursor', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         return regionCountryCodes.has(code) ? 'pointer' : 'default';
       })
       .on('mouseenter', function (event, d) {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
           onHoverCountryRef.current(code);
           d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
@@ -300,7 +306,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
         }
       })
       .on('click', (event, d) => {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         if (regionCountryCodes.has(code) && onClickCountryRef.current) {
           onClickCountryRef.current(code);
         }
@@ -340,7 +346,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
     
     svg.selectAll('.globe-land')
       .each(function(d) {
-        const code = numericToAlpha3[d.id];
+        const code = getCountryCode(d.id);
         const isHovered = code === hoveredCountry;
         const pathSelection = d3.select(this);
 
@@ -380,7 +386,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
             .attr('stroke-width', highlightedCodes[code] ? 1 : 0.5);
         }
       });
-  }, [hoveredCountry, scale, rotation, highlightedCodes, numericToAlpha3]);
+  }, [hoveredCountry, scale, rotation, highlightedCodes, getCountryCode]);
 
   // Compute callout positions dynamically on every animation frame
   const calloutPositions = useMemo(() => {
