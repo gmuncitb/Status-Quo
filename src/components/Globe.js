@@ -490,15 +490,14 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
                             src={relFlagUrl}
                             alt=""
                             style={{
-                              width: 10,
-                              height: 7,
+                              width: 12,
+                              height: 8.5,
                               objectFit: 'cover',
                               borderRadius: 0.5,
                               flexShrink: 0,
                             }}
                           />
                         )}
-                        <span>{rel.countryCode}</span>
                         <span className="callout-rel-arrow">
                           {rel.type === 'improve' ? '▲' : '▼'}
                         </span>
