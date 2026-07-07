@@ -1,3 +1,4 @@
+process.env.NEXT_TELEMETRY_DISABLED = "1";
 const { execSync } = require('child_process');
 
 if (process.env.OPENNEXT_BUILDING) {
