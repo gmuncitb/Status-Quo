@@ -218,25 +218,25 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('class', 'globe-land')
       .attr('d', path)
       .attr('fill', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         return highlightedCodes[code] || '#dddddd';
       })
       .attr('stroke', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
       })
       .attr('stroke-width', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         return highlightedCodes[code] ? 1 : 0.5;
       })
       .attr('transform', 'translate(0, 0)')
       .attr('filter', 'none')
       .style('cursor', (d) => {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         return regionCountryCodes.has(code) ? 'pointer' : 'default';
       })
       .on('mouseenter', function (event, d) {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
           onHoverCountryRef.current(code);
           d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
@@ -248,7 +248,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
         }
       })
       .on('click', (event, d) => {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         if (regionCountryCodes.has(code) && onClickCountryRef.current) {
           onClickCountryRef.current(code);
         }
@@ -288,7 +288,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
     
     svg.selectAll('.globe-land')
       .each(function(d) {
-        const code = numericToAlpha3[d.id];
+        const code = numericToAlpha3[Number(d.id)];
         const isHovered = code === hoveredCountry;
         const pathSelection = d3.select(this);
 
@@ -351,7 +351,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
 
     for (const item of newsItems) {
       const numId = alpha3ToNumeric(item.countryCode);
-      const feature = countries.features.find((f) => String(f.id) === String(numId));
+      const feature = countries.features.find((f) => Number(f.id) === Number(numId));
 
       if (feature) {
         const centroid = d3.geoCentroid(feature);
