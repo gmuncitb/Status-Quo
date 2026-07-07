@@ -160,7 +160,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 40px 140px; /* Offset the globe upward to clear overlapping bottom editor panel */
+  padding: 40px; /* Centered layout so globe sits underneath the floating editor panel */
   background-color: var(--color-bg);
   position: relative;
   overflow: hidden;
@@ -293,7 +293,7 @@ body {
   transform: translateX(-50%) translateY(0);
   width: calc(100% - 80px);
   max-width: 900px;
-  background-color: rgba(255, 255, 255, 0.72);
+  background-color: rgba(255, 255, 255, 0.5); /* Higher translucency to see globe behind it */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -305,13 +305,13 @@ body {
 }
 
 .editor-panel:hover {
-  background-color: rgba(255, 255, 255, 0.82);
+  background-color: rgba(255, 255, 255, 0.65);
 }
 
 .editor-panel.minimized {
   transform: translateX(-50%) translateY(calc(100% - 68px));
   padding: 16px 32px;
-  background-color: rgba(255, 255, 255, 0.72);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .editor-header-row {
