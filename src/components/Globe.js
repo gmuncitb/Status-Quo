@@ -63,7 +63,7 @@ function resolveCollisions(items, boxWidth = 160, defaultHeight = 44, canvasSize
   return adjusted;
 }
 
-export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry }) {
+export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry, isExportMode = false }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
 
@@ -391,7 +391,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
   }, [newsItems, rotation, scale, canvasSize]);
 
   return (
-    <div className="globe-canvas" style={{ width: canvasSize, height: canvasSize }}>
+    <div className={`globe-canvas ${isExportMode ? 'export-canvas' : ''}`} style={{ width: canvasSize, height: canvasSize }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${internalWidth} ${internalHeight}`}
