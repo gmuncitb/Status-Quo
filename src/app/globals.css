@@ -665,6 +665,12 @@ body {
   pointer-events: auto;
   transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
   z-index: 10;
+  cursor: grab;
+  user-select: none;
+}
+
+.callout-box:active {
+  cursor: grabbing;
 }
 
 .callout-box:hover {

@@ -4,8 +4,9 @@ import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import { getFlagUrl } from '@/lib/flags';
+import COUNTRY_COORDINATES from '@/lib/coordinates';
 
-const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json';
+const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
 /**
  * Collision avoidance for floating callout boxes.
@@ -66,7 +67,6 @@ function resolveCollisions(items, boxWidth = 160, defaultHeight = 44, canvasSize
 export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry, isExportMode = false }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
-  const prevHoveredRef = useRef(null); // Track previously hovered country code for O(1) updates
 
   // Sync event handlers to refs to prevent D3 render loop invalidation from parent prop shifts
   const onHoverCountryRef = useRef(onHoverCountry);
@@ -85,6 +85,61 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
   // Animatable states for rotation and scale (synchronized across SVG paths and HTML callouts)
   const [rotation, setRotation] = useState(region.rotation);
   const [scale, setScale] = useState(baseGlobeRadius * (region.scale || 1.0));
+
+  // User-dragged offsets for floating news boxes
+  const [draggedOffsets, setDraggedOffsets] = useState({});
+  const dragRef = useRef(null);
+
+  // Reset dragged offsets when changing active regions
+  useEffect(() => {
+    setDraggedOffsets({});
+  }, [region]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!dragRef.current) return;
+    const { countryCode, startX, startY, startDx, startDy } = dragRef.current;
+    const diffX = e.clientX - startX;
+    const diffY = e.clientY - startY;
+
+    setDraggedOffsets((prev) => ({
+      ...prev,
+      [countryCode]: {
+        dx: startDx + diffX,
+        dy: startDy + diffY
+      }
+    }));
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    dragRef.current = null;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove]);
+
+  const handleMouseDown = useCallback((e, countryCode) => {
+    if (e.button !== 0) return; // Only left click
+    e.stopPropagation();
+
+    const currentOffset = draggedOffsets[countryCode] || { dx: 0, dy: 0 };
+    dragRef.current = {
+      countryCode,
+      startX: e.clientX,
+      startY: e.clientY,
+      startDx: currentOffset.dx,
+      startDy: currentOffset.dy
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [draggedOffsets, handleMouseMove, handleMouseUp]);
+
+  // Clean up global listeners on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
 
   // Load world topology data once on mount
   useEffect(() => {
@@ -170,146 +225,108 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
 
     const path = d3.geoPath().projection(projection);
 
-    // Check if the globe has already been initialized (has a class container)
-    let g = svg.select('g.globe-group');
-    
-    if (g.empty()) {
-      // Clear legacy contents (if any)
-      svg.selectAll('*').remove();
+    const countries = topojson.feature(world, world.objects.countries);
+    const borders = topojson.mesh(world, world.objects.countries, (a, b) => a !== b);
 
-      // Create defs and add drop-shadow filter for 3D hover effect
-      const defs = svg.append('defs');
-      const filter = defs.append('filter')
-        .attr('id', 'hover-shadow')
-        .attr('x', '-30%')
-        .attr('y', '-30%')
-        .attr('width', '160%')
-        .attr('height', '160%');
+    // Clear and redraw
+    svg.selectAll('*').remove();
 
-      filter.append('feDropShadow')
-        .attr('dx', 2)
-        .attr('dy', 4)
-        .attr('stdDeviation', 3)
-        .attr('flood-opacity', 0.22)
-        .attr('flood-color', '#000000');
+    // Create defs and add drop-shadow filter for 3D hover effect
+    const defs = svg.append('defs');
+    const filter = defs.append('filter')
+      .attr('id', 'hover-shadow')
+      .attr('x', '-30%')
+      .attr('y', '-30%')
+      .attr('width', '160%')
+      .attr('height', '160%');
 
-      g = svg.append('g').attr('class', 'globe-group');
+    filter.append('feDropShadow')
+      .attr('dx', 2)
+      .attr('dy', 4)
+      .attr('stdDeviation', 3)
+      .attr('flood-opacity', 0.22)
+      .attr('flood-color', '#000000');
 
-      // Water background — grows with the scale
-      g.append('circle')
-        .attr('class', 'globe-water')
-        .attr('cx', internalWidth / 2)
-        .attr('cy', internalHeight / 2)
-        .attr('r', scale)
-        .attr('fill', '#ffffff')
-        .attr('stroke', 'none');
+    const g = svg.append('g');
 
-      // Graticule grid
-      const graticule = d3.geoGraticule();
-      g.append('path')
-        .datum(graticule())
-        .attr('class', 'globe-graticule')
-        .attr('d', path)
-        .attr('fill', 'none')
-        .attr('stroke', '#eeeeee')
-        .attr('stroke-width', 0.3);
+    // Water background — grows with the scale
+    g.append('circle')
+      .attr('cx', internalWidth / 2)
+      .attr('cy', internalHeight / 2)
+      .attr('r', scale)
+      .attr('fill', '#ffffff')
+      .attr('stroke', 'none');
 
-      const countries = topojson.feature(world, world.objects.countries);
-      const borders = topojson.mesh(world, world.objects.countries, (a, b) => a !== b);
+    // Graticule grid
+    const graticule = d3.geoGraticule();
+    g.append('path')
+      .datum(graticule())
+      .attr('d', path)
+      .attr('fill', 'none')
+      .attr('stroke', '#eeeeee')
+      .attr('stroke-width', 0.3);
 
-      // Landmasses
-      g.selectAll('.globe-land')
-        .data(countries.features)
-        .enter()
-        .append('path')
-        .attr('class', 'globe-land')
-        .attr('id', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return code ? `land-${code}` : null;
-        })
-        .attr('d', path)
-        .attr('fill', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return highlightedCodes[code] || '#dddddd';
-        })
-        .attr('stroke', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
-        })
-        .attr('stroke-width', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return highlightedCodes[code] ? 1 : 0.5;
-        })
-        .attr('transform', 'translate(0, 0)')
-        .attr('filter', 'none')
-        .style('cursor', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return regionCountryCodes.has(code) ? 'pointer' : 'default';
-        })
-        .on('mouseenter', function (event, d) {
-          const code = numericToAlpha3[Number(d.id)];
-          if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
-            onHoverCountryRef.current(code);
-            d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
-          }
-        })
-        .on('mouseleave', () => {
-          if (onHoverCountryRef.current) {
-            onHoverCountryRef.current(null);
-          }
-        })
-        .on('click', (event, d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          if (regionCountryCodes.has(code) && onClickCountryRef.current) {
-            onClickCountryRef.current(code);
-          }
-        });
+    // Landmasses
+    g.selectAll('.globe-land')
+      .data(countries.features)
+      .enter()
+      .append('path')
+      .attr('class', 'globe-land')
+      .attr('d', path)
+      .attr('fill', (d) => {
+        const code = numericToAlpha3[d.id];
+        return highlightedCodes[code] || '#dddddd';
+      })
+      .attr('stroke', (d) => {
+        const code = numericToAlpha3[d.id];
+        return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
+      })
+      .attr('stroke-width', (d) => {
+        const code = numericToAlpha3[d.id];
+        return highlightedCodes[code] ? 1 : 0.5;
+      })
+      .attr('transform', 'translate(0, 0)')
+      .attr('filter', 'none')
+      .style('cursor', (d) => {
+        const code = numericToAlpha3[d.id];
+        return regionCountryCodes.has(code) ? 'pointer' : 'default';
+      })
+      .on('mouseenter', function (event, d) {
+        const code = numericToAlpha3[d.id];
+        if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
+          onHoverCountryRef.current(code);
+          d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
+        }
+      })
+      .on('mouseleave', () => {
+        if (onHoverCountryRef.current) {
+          onHoverCountryRef.current(null);
+        }
+      })
+      .on('click', (event, d) => {
+        const code = numericToAlpha3[d.id];
+        if (regionCountryCodes.has(code) && onClickCountryRef.current) {
+          onClickCountryRef.current(code);
+        }
+      });
 
-      // Country borders
-      g.append('path')
-        .datum(borders)
-        .attr('class', 'globe-borders')
-        .attr('d', path)
-        .attr('fill', 'none')
-        .attr('stroke', '#bbbbbb')
-        .attr('stroke-width', 0.3);
+    // Country borders
+    g.append('path')
+      .datum(borders)
+      .attr('d', path)
+      .attr('fill', 'none')
+      .attr('stroke', '#bbbbbb')
+      .attr('stroke-width', 0.3);
 
-      // Globe outline (outside of clip group for crisp stroke boundary)
-      svg.append('circle')
-        .attr('class', 'globe-outline')
-        .attr('cx', internalWidth / 2)
-        .attr('cy', internalHeight / 2)
-        .attr('r', scale)
-        .attr('fill', 'none')
-        .attr('stroke', '#bbbbbb')
-        .attr('stroke-width', 1);
-    } else {
-      // Dynamic in-place O(N) updates of existing DOM elements, extremely fast
-      g.select('.globe-water').attr('r', scale);
-      g.select('.globe-graticule').attr('d', path);
-      g.selectAll('.globe-land').attr('d', path);
-      g.select('.globe-borders').attr('d', path);
-      svg.select('.globe-outline').attr('r', scale);
+    // Globe outline (outside of clip group for crisp stroke boundary)
+    svg.append('circle')
+      .attr('cx', internalWidth / 2)
+      .attr('cy', internalHeight / 2)
+      .attr('r', scale)
+      .attr('fill', 'none')
+      .attr('stroke', '#bbbbbb')
+      .attr('stroke-width', 1);
 
-      // Update fill, stroke & cursor dynamically (avoids re-binding events)
-      g.selectAll('.globe-land')
-        .attr('fill', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return highlightedCodes[code] || '#dddddd';
-        })
-        .attr('stroke', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
-        })
-        .attr('stroke-width', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return highlightedCodes[code] ? 1 : 0.5;
-        })
-        .style('cursor', (d) => {
-          const code = numericToAlpha3[Number(d.id)];
-          return regionCountryCodes.has(code) ? 'pointer' : 'default';
-        });
-    }
   }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3]);
 
   // Re-run D3 rendering when styling/data states change (excludes hoveredCountry to prevent DOM rebuilding)
@@ -320,35 +337,18 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
   }, [rotation, scale, highlightedCodes, renderGlobe]);
 
   // Update hover styling dynamically in the DOM (allows smooth CSS transform & drop-shadow transitions)
-  // Highly optimized O(1) in-place transition updates targeting only the changed country paths
   useEffect(() => {
     if (!svgRef.current || !worldDataRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    const prev = prevHoveredRef.current;
-    const curr = hoveredCountry;
+    
+    svg.selectAll('.globe-land')
+      .each(function(d) {
+        const code = numericToAlpha3[d.id];
+        const isHovered = code === hoveredCountry;
+        const pathSelection = d3.select(this);
 
-    if (prev === curr) return;
-
-    // Reset previously hovered country
-    if (prev) {
-      const prevPath = svg.select(`#land-${prev}`);
-      if (!prevPath.empty()) {
-        prevPath
-          .attr('transform', 'translate(0, 0)')
-          .attr('filter', 'none')
-          .attr('fill', highlightedCodes[prev] || '#dddddd')
-          .attr('stroke', highlightedCodes[prev] ? '#ffffff' : '#f0f0f0')
-          .attr('stroke-width', highlightedCodes[prev] ? 1 : 0.5);
-      }
-    }
-
-    // Apply hover styling to newly hovered country
-    if (curr) {
-      const currPath = svg.select(`#land-${curr}`);
-      if (!currPath.empty()) {
-        const d = currPath.datum();
-        if (d) {
+        if (isHovered) {
           // Calculate lift displacement vector from center of the globe
           const centroid = d3.geoCentroid(d);
           const projection = d3
@@ -366,20 +366,24 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
             if (len > 0) {
               const tx = (dx / len) * 8; // Lift outward by 8px
               const ty = (dy / len) * 8;
-              currPath.attr('transform', `translate(${tx}, ${ty})`);
+              pathSelection.attr('transform', `translate(${tx}, ${ty})`);
             }
           }
-          currPath
-            .attr('fill', highlightedCodes[curr] ? '#1c1c1c' : '#c8c8c8')
+          pathSelection
+            .attr('fill', highlightedCodes[code] ? '#1c1c1c' : '#c8c8c8')
             .attr('stroke', '#000000')
             .attr('stroke-width', 1.5)
             .attr('filter', 'url(#hover-shadow)')
             .raise();
+        } else {
+          pathSelection
+            .attr('transform', 'translate(0, 0)')
+            .attr('filter', 'none')
+            .attr('fill', highlightedCodes[code] || '#dddddd')
+            .attr('stroke', highlightedCodes[code] ? '#ffffff' : '#f0f0f0')
+            .attr('stroke-width', highlightedCodes[code] ? 1 : 0.5);
         }
-      }
-    }
-
-    prevHoveredRef.current = curr;
+      });
   }, [hoveredCountry, scale, rotation, highlightedCodes, numericToAlpha3]);
 
   // Compute callout positions dynamically on every animation frame
@@ -401,45 +405,15 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
     const countries = topojson.feature(world, world.objects.countries);
     const positions = [];
 
-    // Fallback centroids for tiny island nations and city-states missing or too small to calculate geoCentroid
-    const FALLBACK_CENTROIDS = {
-      SGP: [103.8198, 1.3521],  // Singapore
-      MDV: [73.5089, 3.2028],   // Maldives
-      MLT: [14.4536, 35.9356],  // Malta
-      AND: [1.5218, 42.5063],   // Andorra
-      LIE: [9.5209, 47.1410],   // Liechtenstein
-      BHR: [50.5860, 26.0667],  // Bahrain
-      MUS: [57.5522, -20.3484], // Mauritius
-      SYC: [55.4920, -4.6796],  // Seychelles
-      MCO: [7.4246, 43.7384],   // Monaco
-      VAT: [12.4534, 41.9029],  // Vatican City
-      SMR: [12.4578, 43.9424],  // San Marino
-      ATG: [-61.7964, 17.0608], // Antigua and Barbuda
-      BHS: [-77.3963, 24.2503], // Bahamas
-      BRB: [-59.5432, 13.1939], // Barbados
-      DMA: [-61.3710, 15.4149], // Dominica
-      GRD: [-61.6790, 12.1165], // Grenada
-      KNA: [-62.7830, 17.3578], // Saint Kitts and Nevis
-      LCA: [-60.9789, 13.9094], // Saint Lucia
-      VCT: [-61.2872, 13.2528], // Saint Vincent
-      TTO: [-61.2225, 10.6918], // Trinidad and Tobago
-      FJI: [178.0650, -17.7134], // Fiji
-      KIR: [-157.3630, 1.8709],  // Kiribati
-      WSM: [-172.1046, -13.7590], // Samoa
-      TON: [-175.1897, -21.1789], // Tonga
-      VUT: [166.9592, -15.3767],  // Vanuatu
-      CYN: [33.7233, 35.1919],   // Northern Cyprus
-    };
-
     for (const item of newsItems) {
-      let centroid = null;
-      const numId = alpha3ToNumeric(item.countryCode);
-      const feature = countries.features.find((f) => Number(f.id) === Number(numId));
-
-      if (feature) {
-        centroid = d3.geoCentroid(feature);
-      } else if (FALLBACK_CENTROIDS[item.countryCode]) {
-        centroid = FALLBACK_CENTROIDS[item.countryCode];
+      // Find coordinate from coordinates database; fallback to topology feature centroid
+      let centroid = COUNTRY_COORDINATES[item.countryCode];
+      if (!centroid) {
+        const numId = alpha3ToNumeric(item.countryCode);
+        const feature = countries.features.find((f) => String(f.id) === String(numId));
+        if (feature) {
+          centroid = d3.geoCentroid(feature);
+        }
       }
 
       if (centroid) {
@@ -498,8 +472,8 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
             key={`line-${item.countryCode}`}
             x1={item.centroidX}
             y1={item.centroidY}
-            x2={item.adjX + 80} // Center of 160px wide box
-            y2={item.adjY + 22} // Vertical center of box
+            x2={item.adjX + (draggedOffsets[item.countryCode]?.dx || 0) + 80} // Center of 160px wide box + drag offset
+            y2={item.adjY + (draggedOffsets[item.countryCode]?.dy || 0) + ((item.height || 44) / 2)} // Vertical center of box + drag offset
             stroke={item.color}
             strokeWidth={hoveredCountry === item.countryCode ? 1.8 : 1.2}
             fill="none"
@@ -531,13 +505,14 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
         {calloutPositions.map((item) => {
           const flagUrl = getFlagUrl(item.countryCode);
           const isHovered = hoveredCountry === item.countryCode;
+          const drag = draggedOffsets[item.countryCode] || { dx: 0, dy: 0 };
           return (
             <div
               key={`box-${item.countryCode}`}
               className="callout-box"
               style={{
-                left: item.adjX,
-                top: item.adjY,
+                left: item.adjX + drag.dx,
+                top: item.adjY + drag.dy,
                 borderColor: isHovered ? '#111111' : item.color,
                 borderWidth: isHovered ? '1.5px' : '1px',
                 transform: isHovered ? 'translateY(-2px)' : 'none',
@@ -545,6 +520,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
               }}
               onMouseEnter={() => onHoverCountry && onHoverCountry(item.countryCode)}
               onMouseLeave={() => onHoverCountry && onHoverCountry(null)}
+              onMouseDown={(e) => handleMouseDown(e, item.countryCode)}
             >
               <div className="callout-box-header">
                 {flagUrl && (
