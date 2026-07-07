@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import SplashScreen from '@/components/SplashScreen';
 import EditorPanel from '@/components/EditorPanel';
-import REGIONS from '@/lib/regions';
+import REGIONS, { REGION_KEYS } from '@/lib/regions';
 import { toBlob } from 'html-to-image';
 
 // Dynamically import Globe with SSR disabled (D3 requires DOM)
@@ -15,6 +15,7 @@ export default function Home() {
   const [activeRegion, setActiveRegion] = useState('asia');
   const [newsItemsByRegion, setNewsItemsByRegion] = useState({});
   const [hoveredCountry, setHoveredCountry] = useState(null);
+  const [isEditorMinimized, setIsEditorMinimized] = useState(false);
 
   const region = REGIONS[activeRegion];
   const newsItems = newsItemsByRegion[activeRegion] || [];
@@ -88,26 +89,53 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Globe — centered, seamless */}
-        <div className="globe-area">
-          <Globe
-            region={region}
+        {/* Main Work Area */}
+        <div className="main-work-area">
+          {/* Globe — centered, seamless background */}
+          <div className="globe-area">
+            <Globe
+              region={region}
+              newsItems={newsItems}
+              canvasSize={640}
+              hoveredCountry={hoveredCountry}
+              onHoverCountry={setHoveredCountry}
+            />
+          </div>
+
+          {/* Floating trigger button to open editor when minimized */}
+          {isEditorMinimized && (
+            <button 
+              className="btn btn-primary btn-minimize-floating" 
+              onClick={() => setIsEditorMinimized(false)}
+            >
+              → Open Editor
+            </button>
+          )}
+
+          {/* Editor Drawer — absolute positioned on the left */}
+          <EditorPanel
+            activeRegion={activeRegion}
             newsItems={newsItems}
-            canvasSize={640}
+            onNewsChange={handleNewsChange}
             hoveredCountry={hoveredCountry}
             onHoverCountry={setHoveredCountry}
+            isMinimized={isEditorMinimized}
+            onMinimizeChange={setIsEditorMinimized}
           />
-        </div>
 
-        {/* Editor panel — bottom */}
-        <EditorPanel
-          activeRegion={activeRegion}
-          onRegionChange={handleRegionChange}
-          newsItems={newsItems}
-          onNewsChange={handleNewsChange}
-          hoveredCountry={hoveredCountry}
-          onHoverCountry={setHoveredCountry}
-        />
+          {/* Region Tabs (Pill Selector) — absolute positioned bottom center */}
+          <div className="region-selector-bar">
+            {REGION_KEYS.map((key) => (
+              <button
+                key={key}
+                className={`region-tab-pill ${activeRegion === key ? 'active' : ''}`}
+                onClick={() => handleRegionChange(key)}
+              >
+                {REGIONS[key].name}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </>
   );

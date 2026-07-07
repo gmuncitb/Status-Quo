@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import REGIONS, { REGION_KEYS } from '@/lib/regions';
+import REGIONS from '@/lib/regions';
 import CALLOUT_COLORS from '@/lib/colors';
 import { getFlagUrl } from '@/lib/flags';
 
@@ -24,9 +24,8 @@ function Flag({ code, size = 18 }) {
   );
 }
 
-export default function EditorPanel({ activeRegion, onRegionChange, newsItems, onNewsChange, hoveredCountry, onHoverCountry }) {
+export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hoveredCountry, onHoverCountry, isMinimized, onMinimizeChange }) {
   const [selectedCountry, setSelectedCountry] = useState('');
-  const [isMinimized, setIsMinimized] = useState(false);
   const region = REGIONS[activeRegion];
 
   // Get countries not yet added
@@ -65,37 +64,25 @@ export default function EditorPanel({ activeRegion, onRegionChange, newsItems, o
 
   return (
     <div className={`editor-panel ${isMinimized ? 'minimized' : ''}`}>
-      {/* Top Header Row with Region Tabs and Minimize button */}
+      {/* Editor Panel Header (Title & Close button) */}
       <div className="editor-header-row">
-        <div className="region-tabs">
-          {REGION_KEYS.map((key) => (
-            <button
-              key={key}
-              className={`region-tab ${activeRegion === key ? 'active' : ''}`}
-              onClick={() => onRegionChange(key)}
-            >
-              {REGIONS[key].name}
-            </button>
-          ))}
-        </div>
-
+        <h2 className="editor-title">Recap Editor</h2>
         <button 
-          className="btn btn-minimize" 
-          onClick={() => setIsMinimized(!isMinimized)}
-          style={{ padding: '6px 12px', fontSize: '10px' }}
+          className="btn btn-close" 
+          onClick={() => onMinimizeChange(true)}
+          title="Minimize Editor"
         >
-          {isMinimized ? '↑ Open Editor' : '↓ Minimize'}
+          ×
         </button>
       </div>
 
-      {/* Collapsible Content */}
       <div className="editor-panel-content">
-        {/* News Items — horizontal cards */}
-        <div className="section-title">Highlights — {region.name}</div>
+        {/* News Items — vertical list */}
+        <div className="section-title">Highlights — {region.name} ({newsItems.length})</div>
 
         {newsItems.length === 0 ? (
           <div className="empty-state">
-            <p>No countries highlighted. Add one below to get started.</p>
+            <p>No countries highlighted.<br />Select a country below to highlight.</p>
           </div>
         ) : (
           <div className="news-list">
@@ -146,10 +133,10 @@ export default function EditorPanel({ activeRegion, onRegionChange, newsItems, o
           </div>
         )}
 
-        {/* Add Country — custom dropdown with flags */}
+        {/* Add Country — grid below */}
         {availableCountries.length > 0 && (
           <div className="add-country-section">
-            <div className="section-title">Add Country</div>
+            <div className="section-title">Highlight Country</div>
             <div className="country-picker">
               {availableCountries.map((c) => (
                 <button
