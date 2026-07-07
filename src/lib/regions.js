@@ -1,0 +1,172 @@
+/**
+ * Region definitions for GMUNC's Status Quo
+ * Each region includes:
+ * - name: Display name
+ * - rotation: [lambda, phi, gamma] for D3 orthographic projection
+ * - countries: Array of { code, name } for countries in the region
+ */
+
+const REGIONS = {
+  asia: {
+    name: 'Asia',
+    rotation: [-100, -30, 0],
+    countries: [
+      { code: 'CHN', name: 'China' },
+      { code: 'JPN', name: 'Japan' },
+      { code: 'KOR', name: 'South Korea' },
+      { code: 'PRK', name: 'North Korea' },
+      { code: 'IND', name: 'India' },
+      { code: 'PAK', name: 'Pakistan' },
+      { code: 'BGD', name: 'Bangladesh' },
+      { code: 'IDN', name: 'Indonesia' },
+      { code: 'MYS', name: 'Malaysia' },
+      { code: 'THA', name: 'Thailand' },
+      { code: 'VNM', name: 'Vietnam' },
+      { code: 'PHL', name: 'Philippines' },
+      { code: 'MMR', name: 'Myanmar' },
+      { code: 'SGP', name: 'Singapore' },
+      { code: 'KHM', name: 'Cambodia' },
+      { code: 'LKA', name: 'Sri Lanka' },
+      { code: 'NPL', name: 'Nepal' },
+      { code: 'TWN', name: 'Taiwan' },
+      { code: 'MNG', name: 'Mongolia' },
+      { code: 'LAO', name: 'Laos' },
+      { code: 'KAZ', name: 'Kazakhstan' },
+      { code: 'UZB', name: 'Uzbekistan' },
+      { code: 'AFG', name: 'Afghanistan' },
+    ],
+  },
+
+  north_america: {
+    name: 'North America',
+    rotation: [100, -40, 0],
+    countries: [
+      { code: 'USA', name: 'United States' },
+      { code: 'CAN', name: 'Canada' },
+      { code: 'MEX', name: 'Mexico' },
+      { code: 'CUB', name: 'Cuba' },
+      { code: 'GTM', name: 'Guatemala' },
+      { code: 'HND', name: 'Honduras' },
+      { code: 'SLV', name: 'El Salvador' },
+      { code: 'NIC', name: 'Nicaragua' },
+      { code: 'CRI', name: 'Costa Rica' },
+      { code: 'PAN', name: 'Panama' },
+      { code: 'JAM', name: 'Jamaica' },
+      { code: 'HTI', name: 'Haiti' },
+      { code: 'DOM', name: 'Dominican Republic' },
+    ],
+  },
+
+  south_america: {
+    name: 'South America',
+    rotation: [60, 15, 0],
+    countries: [
+      { code: 'BRA', name: 'Brazil' },
+      { code: 'ARG', name: 'Argentina' },
+      { code: 'COL', name: 'Colombia' },
+      { code: 'PER', name: 'Peru' },
+      { code: 'VEN', name: 'Venezuela' },
+      { code: 'CHL', name: 'Chile' },
+      { code: 'ECU', name: 'Ecuador' },
+      { code: 'BOL', name: 'Bolivia' },
+      { code: 'PRY', name: 'Paraguay' },
+      { code: 'URY', name: 'Uruguay' },
+      { code: 'GUY', name: 'Guyana' },
+      { code: 'SUR', name: 'Suriname' },
+    ],
+  },
+
+  europe: {
+    name: 'Europe',
+    rotation: [-15, -50, 0],
+    countries: [
+      { code: 'GBR', name: 'United Kingdom' },
+      { code: 'FRA', name: 'France' },
+      { code: 'DEU', name: 'Germany' },
+      { code: 'ITA', name: 'Italy' },
+      { code: 'ESP', name: 'Spain' },
+      { code: 'UKR', name: 'Ukraine' },
+      { code: 'POL', name: 'Poland' },
+      { code: 'ROU', name: 'Romania' },
+      { code: 'NLD', name: 'Netherlands' },
+      { code: 'BEL', name: 'Belgium' },
+      { code: 'SWE', name: 'Sweden' },
+      { code: 'NOR', name: 'Norway' },
+      { code: 'FIN', name: 'Finland' },
+      { code: 'GRC', name: 'Greece' },
+      { code: 'PRT', name: 'Portugal' },
+      { code: 'CZE', name: 'Czech Republic' },
+      { code: 'HUN', name: 'Hungary' },
+      { code: 'AUT', name: 'Austria' },
+      { code: 'CHE', name: 'Switzerland' },
+      { code: 'SRB', name: 'Serbia' },
+      { code: 'RUS', name: 'Russia' },
+      { code: 'TUR', name: 'Turkey' },
+    ],
+  },
+
+  middle_east: {
+    name: 'Middle East',
+    rotation: [-45, -25, 0],
+    countries: [
+      { code: 'SAU', name: 'Saudi Arabia' },
+      { code: 'IRN', name: 'Iran' },
+      { code: 'IRQ', name: 'Iraq' },
+      { code: 'ISR', name: 'Israel' },
+      { code: 'PSE', name: 'Palestine' },
+      { code: 'SYR', name: 'Syria' },
+      { code: 'JOR', name: 'Jordan' },
+      { code: 'LBN', name: 'Lebanon' },
+      { code: 'ARE', name: 'UAE' },
+      { code: 'QAT', name: 'Qatar' },
+      { code: 'KWT', name: 'Kuwait' },
+      { code: 'OMN', name: 'Oman' },
+      { code: 'YEM', name: 'Yemen' },
+      { code: 'BHR', name: 'Bahrain' },
+      { code: 'EGY', name: 'Egypt' },
+    ],
+  },
+
+  africa: {
+    name: 'Africa',
+    rotation: [-20, 0, 0],
+    countries: [
+      { code: 'NGA', name: 'Nigeria' },
+      { code: 'ZAF', name: 'South Africa' },
+      { code: 'KEN', name: 'Kenya' },
+      { code: 'ETH', name: 'Ethiopia' },
+      { code: 'GHA', name: 'Ghana' },
+      { code: 'TZA', name: 'Tanzania' },
+      { code: 'COD', name: 'DR Congo' },
+      { code: 'SDN', name: 'Sudan' },
+      { code: 'MAR', name: 'Morocco' },
+      { code: 'DZA', name: 'Algeria' },
+      { code: 'TUN', name: 'Tunisia' },
+      { code: 'LBY', name: 'Libya' },
+      { code: 'MOZ', name: 'Mozambique' },
+      { code: 'AGO', name: 'Angola' },
+      { code: 'UGA', name: 'Uganda' },
+      { code: 'SOM', name: 'Somalia' },
+      { code: 'RWA', name: 'Rwanda' },
+      { code: 'SEN', name: 'Senegal' },
+    ],
+  },
+
+  oceania: {
+    name: 'Oceania',
+    rotation: [-135, 25, 0],
+    countries: [
+      { code: 'AUS', name: 'Australia' },
+      { code: 'NZL', name: 'New Zealand' },
+      { code: 'PNG', name: 'Papua New Guinea' },
+      { code: 'FJI', name: 'Fiji' },
+      { code: 'SLB', name: 'Solomon Islands' },
+      { code: 'VUT', name: 'Vanuatu' },
+      { code: 'WSM', name: 'Samoa' },
+      { code: 'TON', name: 'Tonga' },
+    ],
+  },
+};
+
+export const REGION_KEYS = Object.keys(REGIONS);
+export default REGIONS;
