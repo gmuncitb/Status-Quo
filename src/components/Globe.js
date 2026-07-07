@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import { getFlagUrl } from '@/lib/flags';
 
-const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json';
 
 /**
  * Collision avoidance for floating callout boxes.
@@ -349,12 +349,48 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
     const countries = topojson.feature(world, world.objects.countries);
     const positions = [];
 
+    // Fallback centroids for tiny island nations and city-states missing or too small to calculate geoCentroid
+    const FALLBACK_CENTROIDS = {
+      SGP: [103.8198, 1.3521],  // Singapore
+      MDV: [73.5089, 3.2028],   // Maldives
+      MLT: [14.4536, 35.9356],  // Malta
+      AND: [1.5218, 42.5063],   // Andorra
+      LIE: [9.5209, 47.1410],   // Liechtenstein
+      BHR: [50.5860, 26.0667],  // Bahrain
+      MUS: [57.5522, -20.3484], // Mauritius
+      SYC: [55.4920, -4.6796],  // Seychelles
+      MCO: [7.4246, 43.7384],   // Monaco
+      VAT: [12.4534, 41.9029],  // Vatican City
+      SMR: [12.4578, 43.9424],  // San Marino
+      ATG: [-61.7964, 17.0608], // Antigua and Barbuda
+      BHS: [-77.3963, 24.2503], // Bahamas
+      BRB: [-59.5432, 13.1939], // Barbados
+      DMA: [-61.3710, 15.4149], // Dominica
+      GRD: [-61.6790, 12.1165], // Grenada
+      KNA: [-62.7830, 17.3578], // Saint Kitts and Nevis
+      LCA: [-60.9789, 13.9094], // Saint Lucia
+      VCT: [-61.2872, 13.2528], // Saint Vincent
+      TTO: [-61.2225, 10.6918], // Trinidad and Tobago
+      FJI: [178.0650, -17.7134], // Fiji
+      KIR: [-157.3630, 1.8709],  // Kiribati
+      WSM: [-172.1046, -13.7590], // Samoa
+      TON: [-175.1897, -21.1789], // Tonga
+      VUT: [166.9592, -15.3767],  // Vanuatu
+      CYN: [33.7233, 35.1919],   // Northern Cyprus
+    };
+
     for (const item of newsItems) {
+      let centroid = null;
       const numId = alpha3ToNumeric(item.countryCode);
       const feature = countries.features.find((f) => Number(f.id) === Number(numId));
 
       if (feature) {
-        const centroid = d3.geoCentroid(feature);
+        centroid = d3.geoCentroid(feature);
+      } else if (FALLBACK_CENTROIDS[item.countryCode]) {
+        centroid = FALLBACK_CENTROIDS[item.countryCode];
+      }
+
+      if (centroid) {
         const projected = tempProjection(centroid);
 
         if (projected) {
