@@ -156,6 +156,23 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
 
     // Clear and redraw
     svg.selectAll('*').remove();
+
+    // Create defs and add drop-shadow filter for 3D hover effect
+    const defs = svg.append('defs');
+    const filter = defs.append('filter')
+      .attr('id', 'hover-shadow')
+      .attr('x', '-30%')
+      .attr('y', '-30%')
+      .attr('width', '160%')
+      .attr('height', '160%');
+
+    filter.append('feDropShadow')
+      .attr('dx', 2)
+      .attr('dy', 4)
+      .attr('stdDeviation', 3)
+      .attr('flood-opacity', 0.22)
+      .attr('flood-color', '#000000');
+
     const g = svg.append('g');
 
     // Water background — grows with the scale
@@ -180,6 +197,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .data(countries.features)
       .enter()
       .append('path')
+      .attr('class', 'globe-land')
       .attr('d', path)
       .attr('fill', (d) => {
         const code = numericToAlpha3[d.id];
@@ -198,14 +216,37 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
         if (code === hoveredCountry) return 1.5;
         return highlightedCodes[code] ? 1 : 0.5;
       })
+      .attr('transform', (d) => {
+        const code = numericToAlpha3[d.id];
+        if (code === hoveredCountry) {
+          const centroid = d3.geoCentroid(d);
+          const projected = projection(centroid);
+          if (projected) {
+            const dx = projected[0] - internalWidth / 2;
+            const dy = projected[1] - internalHeight / 2;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 0) {
+              const tx = (dx / len) * 8; // Lift outward by 8px
+              const ty = (dy / len) * 8;
+              return `translate(${tx}, ${ty})`;
+            }
+          }
+        }
+        return 'translate(0, 0)';
+      })
+      .attr('filter', (d) => {
+        const code = numericToAlpha3[d.id];
+        return code === hoveredCountry ? 'url(#hover-shadow)' : 'none';
+      })
       .style('cursor', (d) => {
         const code = numericToAlpha3[d.id];
         return regionCountryCodes.has(code) ? 'pointer' : 'default';
       })
-      .on('mouseenter', (event, d) => {
+      .on('mouseenter', function (event, d) {
         const code = numericToAlpha3[d.id];
         if (regionCountryCodes.has(code) && onHoverCountry) {
           onHoverCountry(code);
+          d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
         }
       })
       .on('mouseleave', () => {
