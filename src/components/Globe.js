@@ -54,14 +54,14 @@ function resolveCollisions(items, boxWidth = 160, boxHeight = 44, canvasSize = 6
   return adjusted;
 }
 
-export default function Globe({ region, newsItems, canvasSize = 480, hoveredCountry, onHoverCountry }) {
+export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
 
   // Constants for fixed D3 rendering coordinate space
   const internalWidth = 800;
   const internalHeight = 800;
-  const baseGlobeRadius = 140;
+  const baseGlobeRadius = 220;
 
   // Animatable states for rotation and scale (synchronized across SVG paths and HTML callouts)
   const [rotation, setRotation] = useState(region.rotation);

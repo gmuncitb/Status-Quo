@@ -93,7 +93,7 @@ export default function Home() {
           <Globe
             region={region}
             newsItems={newsItems}
-            canvasSize={480}
+            canvasSize={640}
             hoveredCountry={hoveredCountry}
             onHoverCountry={setHoveredCountry}
           />
