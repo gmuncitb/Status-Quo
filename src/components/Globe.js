@@ -64,7 +64,7 @@ function resolveCollisions(items, boxWidth = 160, defaultHeight = 44, canvasSize
   return adjusted;
 }
 
-export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry, isExportMode = false }) {
+export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry, isExportMode = false, draggedOffsets = {}, onDraggedOffsetsChange }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
 
@@ -86,14 +86,8 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
   const [rotation, setRotation] = useState(region.rotation);
   const [scale, setScale] = useState(baseGlobeRadius * (region.scale || 1.0));
 
-  // User-dragged offsets for floating news boxes
-  const [draggedOffsets, setDraggedOffsets] = useState({});
+  // Ref to track active drag operation in progress
   const dragRef = useRef(null);
-
-  // Reset dragged offsets when changing active regions
-  useEffect(() => {
-    setDraggedOffsets({});
-  }, [region]);
 
   const handleMouseMove = useCallback((e) => {
     if (!dragRef.current) return;
@@ -101,14 +95,16 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
     const diffX = e.clientX - startX;
     const diffY = e.clientY - startY;
 
-    setDraggedOffsets((prev) => ({
-      ...prev,
-      [countryCode]: {
-        dx: startDx + diffX,
-        dy: startDy + diffY
-      }
-    }));
-  }, []);
+    if (onDraggedOffsetsChange) {
+      onDraggedOffsetsChange((prev) => ({
+        ...prev,
+        [countryCode]: {
+          dx: startDx + diffX,
+          dy: startDy + diffY
+        }
+      }));
+    }
+  }, [onDraggedOffsetsChange]);
 
   const handleMouseUp = useCallback(() => {
     dragRef.current = null;

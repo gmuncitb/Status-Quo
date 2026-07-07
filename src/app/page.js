@@ -18,6 +18,7 @@ export default function Home() {
   const [newsItemsByRegion, setNewsItemsByRegion] = useState({});
   const [hoveredCountry, setHoveredCountry] = useState(null);
   const [isEditorMinimized, setIsEditorMinimized] = useState(false);
+  const [draggedOffsets, setDraggedOffsets] = useState({});
 
   const region = REGIONS[activeRegion];
   const newsItems = newsItemsByRegion[activeRegion] || EMPTY_ARRAY;
@@ -124,6 +125,8 @@ export default function Home() {
               hoveredCountry={hoveredCountry}
               onHoverCountry={setHoveredCountry}
               onClickCountry={handleCountryClick}
+              draggedOffsets={draggedOffsets}
+              onDraggedOffsetsChange={setDraggedOffsets}
             />
           </div>
 
@@ -172,6 +175,7 @@ export default function Home() {
             canvasSize={640}
             hoveredCountry={null}
             isExportMode={true}
+            draggedOffsets={draggedOffsets}
           />
         </div>
       </div>
