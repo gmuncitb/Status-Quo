@@ -277,14 +277,17 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
       .attr('d', path)
       .attr('fill', (d) => {
         const code = getCountryCode(d.id);
+        if (code === 'GRL' || code === 'ATA') return '#ffffff'; // Hide Greenland and Antarctica (render same color as water background)
         return highlightedCodes[code] || '#dddddd';
       })
       .attr('stroke', (d) => {
         const code = getCountryCode(d.id);
+        if (code === 'GRL' || code === 'ATA') return '#ffffff'; // Hide borders for Greenland and Antarctica
         return highlightedCodes[code] ? '#ffffff' : '#f0f0f0';
       })
       .attr('stroke-width', (d) => {
         const code = getCountryCode(d.id);
+        if (code === 'GRL' || code === 'ATA') return 0;
         return highlightedCodes[code] ? 1 : 0.5;
       })
       .attr('transform', 'translate(0, 0)')
@@ -347,8 +350,20 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
     svg.selectAll('.globe-land')
       .each(function(d) {
         const code = getCountryCode(d.id);
-        const isHovered = code === hoveredCountry;
         const pathSelection = d3.select(this);
+
+        // Keep Greenland and Antarctica styled as background water at all times
+        if (code === 'GRL' || code === 'ATA') {
+          pathSelection
+            .attr('transform', 'translate(0, 0)')
+            .attr('filter', 'none')
+            .attr('fill', '#ffffff')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 0);
+          return;
+        }
+
+        const isHovered = code === hoveredCountry;
 
         if (isHovered) {
           // Calculate lift displacement vector from center of the globe
@@ -595,9 +610,10 @@ function buildNumericToAlpha3() {
     '818': 'EGY', '222': 'SLV', '226': 'GNQ', '232': 'ERI', '233': 'EST',
     '231': 'ETH', '242': 'FJI', '246': 'FIN', '250': 'FRA', '266': 'GAB',
     '270': 'GMB', '268': 'GEO', '276': 'DEU', '288': 'GHA', '300': 'GRC',
-    '308': 'GRD', '320': 'GTM', '324': 'GIN', '624': 'GNB', '328': 'GUY',
+    '304': 'GRL', '308': 'GRD', '320': 'GTM', '324': 'GIN', '624': 'GNB', '328': 'GUY',
     '332': 'HTI', '340': 'HND', '348': 'HUN', '352': 'ISL', '356': 'IND',
     '360': 'IDN', '364': 'IRN', '368': 'IRQ', '372': 'IRL', '376': 'ISR',
+    '10': 'ATA',
     '380': 'ITA', '388': 'JAM', '392': 'JPN', '400': 'JOR', '398': 'KAZ',
     '404': 'KEN', '296': 'KIR', '408': 'PRK', '410': 'KOR', '414': 'KWT',
     '417': 'KGZ', '418': 'LAO', '428': 'LVA', '422': 'LBN', '426': 'LSO',
