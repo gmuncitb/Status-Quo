@@ -162,6 +162,19 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Hidden container for exporting un-cropped full globe */}
+      <div style={{ position: 'absolute', top: -9999, left: -9999, pointerEvents: 'none' }}>
+        <div id="globe-export-target" style={{ width: 640, height: 640, backgroundColor: '#fafafa', position: 'relative' }}>
+          <Globe
+            region={{ ...region, scale: 0.95 }} // Reset scale to 0.95 for export to ensure full sphere is visible
+            newsItems={newsItems}
+            canvasSize={640}
+            hoveredCountry={null}
+            isExportMode={true}
+          />
+        </div>
+      </div>
     </>
   );
 }
