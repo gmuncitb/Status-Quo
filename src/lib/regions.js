@@ -8,7 +8,7 @@ const REGIONS = {
     "name": "Asia",
     "rotation": [
       -100,
-      -30,
+      -18,
       0
     ],
     "scale": 1.5,
@@ -151,7 +151,7 @@ const REGIONS = {
     "name": "North America",
     "rotation": [
       100,
-      -40,
+      -18,
       0
     ],
     "scale": 1.5,
@@ -254,10 +254,10 @@ const REGIONS = {
     "name": "South America",
     "rotation": [
       60,
-      15,
+      -18,
       0
     ],
-    "scale": 1.7,
+    "scale": 1.5,
     "countries": [
       {
         "code": "ARG",
@@ -313,10 +313,10 @@ const REGIONS = {
     "name": "Europe",
     "rotation": [
       -15,
-      -50,
+      -18,
       0
     ],
-    "scale": 2.3,
+    "scale": 1.5,
     "countries": [
       {
         "code": "ALB",
@@ -504,10 +504,10 @@ const REGIONS = {
     "name": "Middle East",
     "rotation": [
       -45,
-      -25,
+      -18,
       0
     ],
-    "scale": 2.6,
+    "scale": 1.5,
     "countries": [
       {
         "code": "BHR",
@@ -575,7 +575,7 @@ const REGIONS = {
     "name": "Africa",
     "rotation": [
       -20,
-      0,
+      -18,
       0
     ],
     "scale": 1.5,
@@ -794,10 +794,10 @@ const REGIONS = {
     "name": "Oceania",
     "rotation": [
       -135,
-      25,
+      -18,
       0
     ],
-    "scale": 1.8,
+    "scale": 1.5,
     "countries": [
       {
         "code": "AUS",
