@@ -54,7 +54,7 @@ function resolveCollisions(items, boxWidth = 160, boxHeight = 44, canvasSize = 6
   return adjusted;
 }
 
-export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry }) {
+export default function Globe({ region, newsItems, canvasSize = 640, hoveredCountry, onHoverCountry, onClickCountry }) {
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
 
@@ -125,6 +125,11 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
     return map;
   }, [newsItems]);
 
+  // Build set of country codes belonging to the active region for hover/click interaction
+  const regionCountryCodes = useMemo(() => {
+    return new Set(region.countries.map((c) => c.code));
+  }, [region]);
+
   const numericToAlpha3 = useMemo(() => {
     return buildNumericToAlpha3();
   }, []);
@@ -178,7 +183,9 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('d', path)
       .attr('fill', (d) => {
         const code = numericToAlpha3[d.id];
-        if (code === hoveredCountry) return '#1c1c1c';
+        if (code === hoveredCountry) {
+          return highlightedCodes[code] ? '#1c1c1c' : '#c8c8c8'; // Medium gray on hover for unhighlighted regional countries
+        }
         return highlightedCodes[code] || '#dddddd';
       })
       .attr('stroke', (d) => {
@@ -193,17 +200,23 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       })
       .style('cursor', (d) => {
         const code = numericToAlpha3[d.id];
-        return highlightedCodes[code] ? 'pointer' : 'default';
+        return regionCountryCodes.has(code) ? 'pointer' : 'default';
       })
       .on('mouseenter', (event, d) => {
         const code = numericToAlpha3[d.id];
-        if (highlightedCodes[code] && onHoverCountry) {
+        if (regionCountryCodes.has(code) && onHoverCountry) {
           onHoverCountry(code);
         }
       })
       .on('mouseleave', () => {
         if (onHoverCountry) {
           onHoverCountry(null);
+        }
+      })
+      .on('click', (event, d) => {
+        const code = numericToAlpha3[d.id];
+        if (regionCountryCodes.has(code) && onClickCountry) {
+          onClickCountry(code);
         }
       });
 
@@ -215,7 +228,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 0.3);
 
-    // Globe sphere outline — grows with the scale
+    // Globe outline (outside of clip group for crisp stroke boundary)
     svg.append('circle')
       .attr('cx', internalWidth / 2)
       .attr('cy', internalHeight / 2)
@@ -224,7 +237,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 1);
 
-  }, [rotation, scale, highlightedCodes, numericToAlpha3, hoveredCountry, onHoverCountry]);
+  }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3, hoveredCountry, onHoverCountry, onClickCountry]);
 
   // Re-run D3 rendering when styling states change
   useEffect(() => {

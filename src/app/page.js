@@ -35,6 +35,28 @@ export default function Home() {
     [activeRegion]
   );
 
+  const handleCountryClick = useCallback((code) => {
+    // Check if it's already highlighted
+    const exists = newsItems.some((item) => item.countryCode === code);
+    if (exists) return;
+
+    // Find the country in the region's country list
+    const country = region.countries.find((c) => c.code === code);
+    if (!country) return;
+
+    // Add to newsItems with a default color
+    const CALLOUT_COLORS = require('@/lib/colors').default;
+    handleNewsChange([
+      ...newsItems,
+      {
+        countryCode: code,
+        countryName: country.name,
+        newsText: '',
+        color: CALLOUT_COLORS[0].hex,
+      },
+    ]);
+  }, [newsItems, region, handleNewsChange]);
+
   const handleExport = useCallback(async () => {
     const node = document.getElementById('globe-export-target');
     if (!node) return;
@@ -99,6 +121,7 @@ export default function Home() {
               canvasSize={640}
               hoveredCountry={hoveredCountry}
               onHoverCountry={setHoveredCountry}
+              onClickCountry={handleCountryClick}
             />
           </div>
 
