@@ -66,7 +66,7 @@ export default function Home() {
 
     try {
       const blob = await toBlob(node, {
-        pixelRatio: 2, // 2x pixel ratio for high resolution output
+        pixelRatio: 3.5, // 3.5x pixel ratio outputs a 4K resolution (3990x3990) PNG image
       });
 
       if (blob) {
