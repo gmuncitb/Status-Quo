@@ -58,6 +58,15 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
   const svgRef = useRef(null);
   const worldDataRef = useRef(null);
 
+  // Sync event handlers to refs to prevent D3 render loop invalidation from parent prop shifts
+  const onHoverCountryRef = useRef(onHoverCountry);
+  const onClickCountryRef = useRef(onClickCountry);
+
+  useEffect(() => {
+    onHoverCountryRef.current = onHoverCountry;
+    onClickCountryRef.current = onClickCountry;
+  }, [onHoverCountry, onClickCountry]);
+
   // Constants for fixed D3 rendering coordinate space
   const internalWidth = 800;
   const internalHeight = 800;
@@ -219,20 +228,20 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       })
       .on('mouseenter', function (event, d) {
         const code = numericToAlpha3[d.id];
-        if (regionCountryCodes.has(code) && onHoverCountry) {
-          onHoverCountry(code);
+        if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
+          onHoverCountryRef.current(code);
           d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
         }
       })
       .on('mouseleave', () => {
-        if (onHoverCountry) {
-          onHoverCountry(null);
+        if (onHoverCountryRef.current) {
+          onHoverCountryRef.current(null);
         }
       })
       .on('click', (event, d) => {
         const code = numericToAlpha3[d.id];
-        if (regionCountryCodes.has(code) && onClickCountry) {
-          onClickCountry(code);
+        if (regionCountryCodes.has(code) && onClickCountryRef.current) {
+          onClickCountryRef.current(code);
         }
       });
 
@@ -253,7 +262,7 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 1);
 
-  }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3, onHoverCountry, onClickCountry]);
+  }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3]);
 
   // Re-run D3 rendering when styling/data states change (excludes hoveredCountry to prevent DOM rebuilding)
   useEffect(() => {

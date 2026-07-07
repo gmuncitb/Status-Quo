@@ -10,6 +10,8 @@ import { toBlob } from 'html-to-image';
 // Dynamically import Globe with SSR disabled (D3 requires DOM)
 const Globe = dynamic(() => import('@/components/Globe'), { ssr: false });
 
+const EMPTY_ARRAY = [];
+
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeRegion, setActiveRegion] = useState('asia');
@@ -18,7 +20,7 @@ export default function Home() {
   const [isEditorMinimized, setIsEditorMinimized] = useState(false);
 
   const region = REGIONS[activeRegion];
-  const newsItems = newsItemsByRegion[activeRegion] || [];
+  const newsItems = newsItemsByRegion[activeRegion] || EMPTY_ARRAY;
 
   const handleRegionChange = useCallback((key) => {
     setActiveRegion(key);
