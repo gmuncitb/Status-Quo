@@ -353,12 +353,25 @@ export default function Globe({ region, newsItems, canvasSize = 640, hoveredCoun
           if (dist < Math.PI / 2) {
             // Map 800x800 internal coordinates to canvasSize screen pixels
             const scaleFactor = canvasSize / internalWidth;
+            const centroidX = projected[0] * scaleFactor;
+            const centroidY = projected[1] * scaleFactor;
+
+            // Calculate direction vector from center of the canvas to push callouts outward
+            const dx = centroidX - canvasSize / 2;
+            const dy = centroidY - canvasSize / 2;
+            const len = Math.sqrt(dx * dx + dy * dy);
+
+            // Push callouts radially outward by 130px to clear the landmasses
+            const pushDistance = 130;
+            const pushX = len > 0 ? (dx / len) * pushDistance : 0;
+            const pushY = len > 0 ? (dy / len) * pushDistance : pushDistance;
+
             positions.push({
               ...item,
-              x: projected[0] * scaleFactor,
-              y: projected[1] * scaleFactor,
-              centroidX: projected[0] * scaleFactor,
-              centroidY: projected[1] * scaleFactor,
+              x: centroidX + pushX - 80, // offset by half of 160px width to center the box on the vector
+              y: centroidY + pushY - 22, // offset by half of 44px height to center the box on the vector
+              centroidX,
+              centroidY,
             });
           }
         }
