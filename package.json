@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cloudflare-build": "opennextjs-cloudflare build",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
@@ -18,7 +21,9 @@
     "topojson-client": "^3.1.0"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10"
+    "eslint-config-next": "16.2.10",
+    "wrangler": "^4.107.0"
   }
 }
