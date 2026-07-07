@@ -3,6 +3,7 @@
  * Each region includes:
  * - name: Display name
  * - rotation: [lambda, phi, gamma] for D3 orthographic projection
+ * - scale: Zoom scale multiplier for the region (base is globeRadius)
  * - countries: Array of { code, name } for countries in the region
  */
 
@@ -10,6 +11,7 @@ const REGIONS = {
   asia: {
     name: 'Asia',
     rotation: [-100, -30, 0],
+    scale: 1.5,
     countries: [
       { code: 'CHN', name: 'China' },
       { code: 'JPN', name: 'Japan' },
@@ -40,6 +42,7 @@ const REGIONS = {
   north_america: {
     name: 'North America',
     rotation: [100, -40, 0],
+    scale: 1.5,
     countries: [
       { code: 'USA', name: 'United States' },
       { code: 'CAN', name: 'Canada' },
@@ -60,6 +63,7 @@ const REGIONS = {
   south_america: {
     name: 'South America',
     rotation: [60, 15, 0],
+    scale: 1.7,
     countries: [
       { code: 'BRA', name: 'Brazil' },
       { code: 'ARG', name: 'Argentina' },
@@ -79,6 +83,7 @@ const REGIONS = {
   europe: {
     name: 'Europe',
     rotation: [-15, -50, 0],
+    scale: 2.3,
     countries: [
       { code: 'GBR', name: 'United Kingdom' },
       { code: 'FRA', name: 'France' },
@@ -108,6 +113,7 @@ const REGIONS = {
   middle_east: {
     name: 'Middle East',
     rotation: [-45, -25, 0],
+    scale: 2.6,
     countries: [
       { code: 'SAU', name: 'Saudi Arabia' },
       { code: 'IRN', name: 'Iran' },
@@ -130,6 +136,7 @@ const REGIONS = {
   africa: {
     name: 'Africa',
     rotation: [-20, 0, 0],
+    scale: 1.5,
     countries: [
       { code: 'NGA', name: 'Nigeria' },
       { code: 'ZAF', name: 'South Africa' },
@@ -155,6 +162,7 @@ const REGIONS = {
   oceania: {
     name: 'Oceania',
     rotation: [-135, 25, 0],
+    scale: 1.8,
     countries: [
       { code: 'AUS', name: 'Australia' },
       { code: 'NZL', name: 'New Zealand' },

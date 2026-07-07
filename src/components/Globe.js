@@ -60,6 +60,8 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
 
+  const globeRadius = (canvasSize / 2) - 20;
+
   // Load world topology data
   useEffect(() => {
     d3.json(WORLD_TOPO_URL).then((world) => {
@@ -91,13 +93,12 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
 
     const width = canvasSize;
     const height = canvasSize;
-    const globeRadius = (Math.min(width, height) / 2) - 20;
 
     // Set up projection
     if (!projectionRef.current) {
       projectionRef.current = d3
         .geoOrthographic()
-        .scale(globeRadius)
+        .scale(globeRadius * (region.scale || 1.0))
         .translate([width / 2, height / 2])
         .clipAngle(90)
         .rotate(region.rotation);
@@ -114,9 +115,20 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
     // Clear and redraw
     svg.selectAll('*').remove();
 
-    const g = svg.append('g');
+    // Create defs and clipPath for zooming
+    const defs = svg.append('defs');
+    defs.append('clipPath')
+      .attr('id', 'globe-clip')
+      .append('circle')
+      .attr('cx', width / 2)
+      .attr('cy', height / 2)
+      .attr('r', globeRadius);
 
-    // Water (globe background) — drawn first so land sits on top
+    // Group with clip-path
+    const g = svg.append('g')
+      .attr('clip-path', 'url(#globe-clip)');
+
+    // Water (globe background) — drawn first inside the clip
     g.append('circle')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
@@ -178,15 +190,15 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 0.3);
 
-    // Globe outline
-    g.append('circle')
+    // Globe outline (outside of clip group for crisp stroke boundary)
+    svg.append('circle')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', globeRadius)
       .attr('fill', 'none')
       .attr('stroke', '#bbbbbb')
       .attr('stroke-width', 1);
-  }, [region, highlightedCodes, canvasSize, numericToAlpha3, hoveredCountry, onHoverCountry]);
+  }, [region, highlightedCodes, canvasSize, numericToAlpha3, hoveredCountry, onHoverCountry, globeRadius]);
 
   // Re-render when highlighted countries or hovered status change
   useEffect(() => {
@@ -195,7 +207,7 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
     }
   }, [highlightedCodes, hoveredCountry, renderGlobe]);
 
-  // Animate rotation when region changes
+  // Animate rotation and zoom when region changes
   useEffect(() => {
     if (!projectionRef.current || !worldDataRef.current) return;
 
@@ -203,18 +215,23 @@ export default function Globe({ region, newsItems, canvasSize = 600, hoveredCoun
     const currentRotation = projection.rotate();
     const targetRotation = region.rotation;
 
-    const interpolate = d3.interpolate(currentRotation, targetRotation);
+    const currentScale = projection.scale();
+    const targetScale = globeRadius * (region.scale || 1.0);
+
+    const interpolateRotation = d3.interpolate(currentRotation, targetRotation);
+    const interpolateScale = d3.interpolate(currentScale, targetScale);
 
     d3.transition()
       .duration(1000)
       .ease(d3.easeCubicInOut)
-      .tween('rotate', () => {
+      .tween('rotate-and-scale', () => {
         return (t) => {
-          projection.rotate(interpolate(t));
+          projection.rotate(interpolateRotation(t));
+          projection.scale(interpolateScale(t));
           renderGlobe();
         };
       });
-  }, [region, renderGlobe]);
+  }, [region, renderGlobe, globeRadius]);
 
   // Compute callout positions from country centroids
   const calloutPositions = useMemo(() => {
