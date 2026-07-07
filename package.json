@@ -24,5 +24,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "wrangler": "^4.107.0"
+  },
+  "overrides": {
+    "glob": "^12.0.0"
   }
 }
