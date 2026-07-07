@@ -293,10 +293,10 @@ body {
   transform: translateX(-50%) translateY(0);
   width: calc(100% - 80px);
   max-width: 900px;
-  background-color: rgba(255, 255, 255, 0.5); /* Higher translucency to see globe behind it */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.28); /* Highly transparent */
+  backdrop-filter: blur(36px); /* Very frosted */
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.4); /* Premium reflection border */
   border-radius: var(--radius-lg);
   padding: 24px 32px;
   box-shadow: var(--shadow-lg);
@@ -305,13 +305,14 @@ body {
 }
 
 .editor-panel:hover {
-  background-color: rgba(255, 255, 255, 0.65);
+  background-color: rgba(255, 255, 255, 0.38);
 }
 
 .editor-panel.minimized {
   transform: translateX(-50%) translateY(calc(100% - 68px));
   padding: 16px 32px;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .editor-header-row {
