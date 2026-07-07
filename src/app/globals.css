@@ -78,7 +78,9 @@ body {
 .app-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
   transition: opacity var(--transition-normal), transform var(--transition-normal);
 }
 
@@ -154,12 +156,14 @@ body {
    ============================================ */
 
 .globe-area {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 40px 60px;
+  padding: 40px 40px 140px; /* Offset the globe upward to clear overlapping bottom editor panel */
   background-color: var(--color-bg);
   position: relative;
+  overflow: hidden;
 }
 
 .globe-area::before {
@@ -283,11 +287,59 @@ body {
    ============================================ */
 
 .editor-panel {
-  flex: 1;
-  background-color: var(--color-white);
-  border-top: 1px solid var(--color-border);
-  padding: 32px 40px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.02);
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  width: calc(100% - 80px);
+  max-width: 900px;
+  background-color: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 24px 32px;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  transition: transform var(--transition-slow), padding var(--transition-slow), background-color var(--transition-fast);
+}
+
+.editor-panel:hover {
+  background-color: rgba(255, 255, 255, 0.82);
+}
+
+.editor-panel.minimized {
+  transform: translateX(-50%) translateY(calc(100% - 68px));
+  padding: 16px 32px;
+  background-color: rgba(255, 255, 255, 0.72);
+}
+
+.editor-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 24px;
+  transition: margin var(--transition-slow);
+}
+
+.minimized .editor-header-row {
+  margin-bottom: 0;
+}
+
+.editor-panel-content {
+  opacity: 1;
+  max-height: 500px;
+  overflow-y: auto;
+  transition: opacity var(--transition-normal), max-height var(--transition-slow), transform var(--transition-slow);
+  transform: translateY(0);
+}
+
+.minimized .editor-panel-content {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(10px);
+  pointer-events: none;
 }
 
 /* Region Tabs (Pills) */
@@ -295,7 +347,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 28px;
+  margin-bottom: 0; /* Handled by header row */
 }
 
 .region-tab {
