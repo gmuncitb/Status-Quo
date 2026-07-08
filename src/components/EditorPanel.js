@@ -128,18 +128,54 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                   }
                 />
 
-                <div className="color-picker-row">
-                  {CALLOUT_COLORS.map((c) => (
-                    <div
-                      key={c.id}
-                      className={`color-swatch ${item.color === c.hex ? 'active' : ''}`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.label}
-                      onClick={() =>
-                        updateNewsItem(item.countryCode, 'color', c.hex)
+                <div className="canva-color-picker">
+                  {/* Custom Canva color picker button */}
+                  <div 
+                    className="canva-custom-color-btn"
+                    style={{ background: item.color || '#dddddd' }}
+                    title="Choose custom color"
+                  >
+                    <span className="plus-icon">+</span>
+                    <input
+                      type="color"
+                      value={item.color && item.color.startsWith('#') && item.color.length === 7 ? item.color : '#dddddd'}
+                      onChange={(e) =>
+                        updateNewsItem(item.countryCode, 'color', e.target.value)
                       }
+                      className="canva-native-color-input"
                     />
-                  ))}
+                  </div>
+
+                  {/* Preset swatches */}
+                  <div className="canva-presets-row">
+                    {CALLOUT_COLORS.map((c) => (
+                      <div
+                        key={c.id}
+                        className={`canva-color-swatch ${item.color === c.hex ? 'active' : ''}`}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.label}
+                        onClick={() =>
+                          updateNewsItem(item.countryCode, 'color', c.hex)
+                        }
+                      />
+                    ))}
+                  </div>
+
+                  {/* HEX Input */}
+                  <input
+                    type="text"
+                    className="canva-hex-input"
+                    value={item.color || ''}
+                    placeholder="#000000"
+                    maxLength={7}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val && !val.startsWith('#')) {
+                        val = '#' + val;
+                      }
+                      updateNewsItem(item.countryCode, 'color', val);
+                    }}
+                  />
                 </div>
 
                 {/* Geopolitical Affected Relations Editor */}
