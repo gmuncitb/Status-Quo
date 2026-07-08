@@ -476,7 +476,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
             y1={item.centroidY}
             x2={item.adjX + (draggedOffsets[item.countryCode]?.dx || 0) + 80} // Center of 160px wide box + drag offset
             y2={item.adjY + (draggedOffsets[item.countryCode]?.dy || 0) + ((item.height || 44) / 2)} // Vertical center of box + drag offset
-            stroke={item.color}
+            stroke="#888888" // Neutral colored connecting lines
             strokeWidth={hoveredCountry === item.countryCode ? 1.8 : 1.2}
             fill="none"
             opacity={hoveredCountry === item.countryCode ? 0.8 : 0.4}
@@ -494,8 +494,8 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
             style={{
               left: item.centroidX,
               top: item.centroidY,
-              color: item.color,
-              backgroundColor: item.color,
+              color: '#888888', // Neutral centroid dots
+              backgroundColor: '#888888', // Neutral centroid dots
               transform: `translate(-50%, -50%) scale(${hoveredCountry === item.countryCode ? 1.3 : 1})`,
             }}
           />
@@ -515,7 +515,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
               style={{
                 left: item.adjX + drag.dx,
                 top: item.adjY + drag.dy,
-                borderColor: isHovered ? '#111111' : item.color,
+                borderColor: isHovered ? '#111111' : 'var(--color-border)', // Neutral borders
                 borderWidth: isHovered ? '1.5px' : '1px',
                 transform: isHovered ? 'translateY(-2px)' : 'none',
                 boxShadow: isHovered ? 'var(--shadow-lg)' : 'var(--shadow-md)',
