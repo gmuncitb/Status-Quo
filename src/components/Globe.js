@@ -85,6 +85,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
   // Animatable states for rotation and scale (synchronized across SVG paths and HTML callouts)
   const [rotation, setRotation] = useState(region.rotation);
   const [scale, setScale] = useState(baseGlobeRadius * (region.scale || 1.0));
+  const [worldDataLoaded, setWorldDataLoaded] = useState(false);
 
   // Ref to track active drag operation in progress
   const dragRef = useRef(null);
@@ -141,7 +142,7 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
   useEffect(() => {
     d3.json(WORLD_TOPO_URL).then((world) => {
       worldDataRef.current = world;
-      renderGlobe();
+      setWorldDataLoaded(true);
     });
   }, []);
 
