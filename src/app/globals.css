@@ -1063,12 +1063,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 520px;
+  height: 520px;
+  max-width: 95vw;
+  max-height: 95vw;
   opacity: 0;
-  animation: landing-fade-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  animation: landing-globe-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
 }
 
 .landing-globe-canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 520px;
+  max-height: 520px;
+  aspect-ratio: 1;
 }
 
 .landing-hero-content {
@@ -1367,10 +1376,6 @@ body {
 @keyframes landing-fade-in {
   from { opacity: 0; transform: translate(-50%, -50%) scale(0.97); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-.landing-hero-globe {
-  animation-name: landing-globe-in;
 }
 
 @keyframes landing-globe-in {
