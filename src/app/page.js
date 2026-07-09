@@ -60,12 +60,24 @@ export default function LandingPage() {
   useEffect(() => {
     async function load() {
       if (isSupabaseConfigured()) {
-        const data = await fetchGlobes();
+        let data = await fetchGlobes();
+        const currentMonthId = getCurrentMonthId();
+        
+        // Auto-create current month's globe if it does not exist in the database yet
+        const currentExists = data.some((g) => g.month_id === currentMonthId);
+        if (!currentExists) {
+          const created = await getOrCreateGlobe(currentMonthId);
+          if (created) {
+            // Re-fetch globes to include the new one in the dataset
+            data = await fetchGlobes();
+          }
+        }
+
         if (data.length > 0) {
           const enriched = data.map((g) => ({
             ...g,
             locked: isGlobeLocked(g.month_id),
-            isCurrent: g.month_id === getCurrentMonthId(),
+            isCurrent: g.month_id === currentMonthId,
           }));
           setGlobes(enriched);
         } else {
