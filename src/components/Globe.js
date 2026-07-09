@@ -210,30 +210,25 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
     return numericToAlpha3[numId] || null;
   }, [numericToAlpha3]);
 
-  // Main D3 render routine
-  const renderGlobe = useCallback(() => {
+  // Refs for callbacks and dynamic sets to prevent D3 event listener rebinding lag
+  const regionCountryCodesRef = useRef(regionCountryCodes);
+
+  useEffect(() => { regionCountryCodesRef.current = regionCountryCodes; }, [regionCountryCodes]);
+
+  // SVG DOM builder — runs once when geography data loads
+  const initGlobe = useCallback(() => {
     if (!svgRef.current || !worldDataRef.current) return;
 
     const svg = d3.select(svgRef.current);
     const world = worldDataRef.current;
 
-    // Set up orthographic projection with animated scale & rotation states
-    const projection = d3
-      .geoOrthographic()
-      .scale(scale)
-      .translate([internalWidth / 2, internalHeight / 2])
-      .clipAngle(90)
-      .rotate(rotation);
-
-    const path = d3.geoPath().projection(projection);
-
     const countries = topojson.feature(world, world.objects.countries);
     const borders = topojson.mesh(world, world.objects.countries, (a, b) => a !== b);
 
-    // Clear and redraw
+    // Clear previous drawing
     svg.selectAll('*').remove();
 
-    // Create defs and add drop-shadow filter for 3D hover effect
+    // Create defs and drop-shadow filter
     const defs = svg.append('defs');
     const filter = defs.append('filter')
       .attr('id', 'hover-shadow')
@@ -249,31 +244,94 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
       .attr('flood-opacity', 0.22)
       .attr('flood-color', '#000000');
 
-    const g = svg.append('g');
+    const g = svg.append('g').attr('class', 'globe-group');
 
-    // Water background — grows with the scale
+    // 1. Water background
     g.append('circle')
-      .attr('cx', internalWidth / 2)
-      .attr('cy', internalHeight / 2)
-      .attr('r', scale)
+      .attr('class', 'globe-water')
       .attr('fill', '#ffffff')
       .attr('stroke', 'none');
 
-    // Graticule grid
+    // 2. Graticule grid
     const graticule = d3.geoGraticule();
     g.append('path')
       .datum(graticule())
-      .attr('d', path)
+      .attr('class', 'globe-graticule')
       .attr('fill', 'none')
       .attr('stroke', '#eeeeee')
       .attr('stroke-width', 0.3);
 
-    // Landmasses
+    // 3. Landmasses (Data bind once)
     g.selectAll('.globe-land')
       .data(countries.features)
       .enter()
       .append('path')
       .attr('class', 'globe-land')
+      .attr('transform', 'translate(0, 0)')
+      .attr('filter', 'none')
+      .on('mouseenter', function (event, d) {
+        const code = getCountryCode(d.id);
+        if (regionCountryCodesRef.current.has(code) && onHoverCountryRef.current) {
+          onHoverCountryRef.current(code);
+          d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
+        }
+      })
+      .on('mouseleave', () => {
+        if (onHoverCountryRef.current) {
+          onHoverCountryRef.current(null);
+        }
+      })
+      .on('click', (event, d) => {
+        const code = getCountryCode(d.id);
+        if (regionCountryCodesRef.current.has(code) && onClickCountryRef.current) {
+          onClickCountryRef.current(code);
+        }
+      });
+
+    // 4. Country borders
+    g.append('path')
+      .datum(borders)
+      .attr('class', 'globe-borders')
+      .attr('fill', 'none')
+      .attr('stroke', '#bbbbbb')
+      .attr('stroke-width', 0.3);
+
+    // 5. Globe outline circle
+    svg.append('circle')
+      .attr('class', 'globe-outline')
+      .attr('fill', 'none')
+      .attr('stroke', '#bbbbbb')
+      .attr('stroke-width', 1);
+
+  }, [getCountryCode]);
+
+  // SVG attribute updater — runs on rotation, scale, highlightedCodes, or region change
+  const updateGlobe = useCallback(() => {
+    if (!svgRef.current || !worldDataRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    const projection = d3
+      .geoOrthographic()
+      .scale(scale)
+      .translate([internalWidth / 2, internalHeight / 2])
+      .clipAngle(90)
+      .rotate(rotation);
+
+    const path = d3.geoPath().projection(projection);
+
+    // 1. Update Water background
+    svg.select('.globe-water')
+      .attr('cx', internalWidth / 2)
+      .attr('cy', internalHeight / 2)
+      .attr('r', scale);
+
+    // 2. Update Graticule path
+    svg.select('.globe-graticule')
+      .attr('d', path);
+
+    // 3. Update Land paths
+    svg.selectAll('.globe-land')
       .attr('d', path)
       .attr('fill', (d) => {
         const code = getCountryCode(d.id);
@@ -287,56 +345,36 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
         const code = getCountryCode(d.id);
         return highlightedCodes[code] ? 1 : 0.5;
       })
-      .attr('transform', 'translate(0, 0)')
-      .attr('filter', 'none')
       .style('cursor', (d) => {
         const code = getCountryCode(d.id);
-        return regionCountryCodes.has(code) ? 'pointer' : 'default';
-      })
-      .on('mouseenter', function (event, d) {
-        const code = getCountryCode(d.id);
-        if (regionCountryCodes.has(code) && onHoverCountryRef.current) {
-          onHoverCountryRef.current(code);
-          d3.select(this).raise(); // Bring path to front so drop-shadow renders over adjacent borders
-        }
-      })
-      .on('mouseleave', () => {
-        if (onHoverCountryRef.current) {
-          onHoverCountryRef.current(null);
-        }
-      })
-      .on('click', (event, d) => {
-        const code = getCountryCode(d.id);
-        if (regionCountryCodes.has(code) && onClickCountryRef.current) {
-          onClickCountryRef.current(code);
-        }
+        return regionCountryCodesRef.current.has(code) ? 'pointer' : 'default';
       });
 
-    // Country borders
-    g.append('path')
-      .datum(borders)
-      .attr('d', path)
-      .attr('fill', 'none')
-      .attr('stroke', '#bbbbbb')
-      .attr('stroke-width', 0.3);
+    // 4. Update Country borders
+    svg.select('.globe-borders')
+      .attr('d', path);
 
-    // Globe outline (outside of clip group for crisp stroke boundary)
-    svg.append('circle')
+    // 5. Update Outline circle
+    svg.select('.globe-outline')
       .attr('cx', internalWidth / 2)
       .attr('cy', internalHeight / 2)
-      .attr('r', scale)
-      .attr('fill', 'none')
-      .attr('stroke', '#bbbbbb')
-      .attr('stroke-width', 1);
+      .attr('r', scale);
 
-  }, [rotation, scale, highlightedCodes, regionCountryCodes, numericToAlpha3]);
+  }, [rotation, scale, highlightedCodes, getCountryCode]);
 
-  // Re-run D3 rendering when styling/data states change (excludes hoveredCountry to prevent DOM rebuilding)
+  // Hook 1: Build DOM once data finishes loading
   useEffect(() => {
-    if (worldDataRef.current) {
-      renderGlobe();
+    if (worldDataLoaded) {
+      initGlobe();
     }
-  }, [rotation, scale, highlightedCodes, renderGlobe]);
+  }, [worldDataLoaded, initGlobe]);
+
+  // Hook 2: Run fast attribute update on state updates
+  useEffect(() => {
+    if (worldDataLoaded) {
+      updateGlobe();
+    }
+  }, [worldDataLoaded, updateGlobe, rotation, scale, highlightedCodes, regionCountryCodes]);
 
   // Update hover styling dynamically in the DOM (allows smooth CSS transform & drop-shadow transitions)
   useEffect(() => {
