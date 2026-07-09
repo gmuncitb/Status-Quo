@@ -97,6 +97,24 @@ CREATE POLICY "Allow write for editable globes" ON news_items
     )
   );
 
--- 6. Enable Realtime on both tables
-ALTER PUBLICATION supabase_realtime ADD TABLE globes;
-ALTER PUBLICATION supabase_realtime ADD TABLE news_items;
+-- 6. Enable Realtime on both tables (checking if already member first to prevent SQL errors)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_rel pr
+    JOIN pg_publication p ON p.oid = pr.prpubid
+    JOIN pg_class c ON c.oid = pr.prrelid
+    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'globes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE globes;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_rel pr
+    JOIN pg_publication p ON p.oid = pr.prpubid
+    JOIN pg_class c ON c.oid = pr.prrelid
+    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'news_items'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE news_items;
+  END IF;
+END $$;
