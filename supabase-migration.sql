@@ -47,13 +47,55 @@ CREATE TRIGGER news_items_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();
 
--- 5. Disable RLS (internal team tool, no auth needed)
+-- 5. Enable Row Level Security and configure secure anonymous policies
 ALTER TABLE globes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE news_items ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for anonymous users (anon key)
-CREATE POLICY "Allow all on globes" ON globes FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on news_items" ON news_items FOR ALL USING (true) WITH CHECK (true);
+-- Drop old policies if they exist
+DROP POLICY IF EXISTS "Allow all on globes" ON globes;
+DROP POLICY IF EXISTS "Allow all on news_items" ON news_items;
+DROP POLICY IF EXISTS "Allow select for everyone" ON globes;
+DROP POLICY IF EXISTS "Allow insert for editable months" ON globes;
+DROP POLICY IF EXISTS "Allow select for everyone" ON news_items;
+DROP POLICY IF EXISTS "Allow write for editable globes" ON news_items;
+
+-- Helper function to check if a globe is editable (locks on the 5th of the following month)
+CREATE OR REPLACE FUNCTION is_globe_editable(month_text text)
+RETURNS boolean AS $$
+DECLARE
+  lock_date timestamp;
+BEGIN
+  -- Construct date for 1st of the month, add 1 month and 4 days to get 5th of next month
+  lock_date := to_date(month_text || '-01', 'YYYY-MM-DD') + interval '1 month' + interval '4 days';
+  RETURN now() < lock_date;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Policies for globes table (anonymous select and insert for editable months, no updates or deletes)
+CREATE POLICY "Allow select for everyone" ON globes 
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow insert for editable months" ON globes 
+  FOR INSERT WITH CHECK (is_globe_editable(month_id));
+
+-- Policies for news_items table (anonymous select and write only if the parent globe is currently editable/unlocked)
+CREATE POLICY "Allow select for everyone" ON news_items 
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow write for editable globes" ON news_items 
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM globes 
+      WHERE globes.id = news_items.globe_id 
+      AND is_globe_editable(globes.month_id)
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM globes 
+      WHERE globes.id = news_items.globe_id 
+      AND is_globe_editable(globes.month_id)
+    )
+  );
 
 -- 6. Enable Realtime on both tables
 ALTER PUBLICATION supabase_realtime ADD TABLE globes;
