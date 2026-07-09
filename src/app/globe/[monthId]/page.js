@@ -16,6 +16,16 @@ export default function GlobePage({ params }) {
   const { monthId } = use(params);
   const decodedMonthId = decodeURIComponent(monthId);
 
+  const isLocked = (() => {
+    try {
+      const [year, month] = decodedMonthId.split('-').map(Number);
+      const lockDate = new Date(year, month, 5);
+      return new Date() >= lockDate;
+    } catch {
+      return false;
+    }
+  })();
+
   const {
     globeRecord,
     newsItemsByRegion,
@@ -116,6 +126,7 @@ export default function GlobePage({ params }) {
         {/* Top bar */}
         <div className="top-bar">
           <div className="top-bar-left">
+            <a href="/" className="top-bar-back" title="Back to editions">←</a>
             <img
               src="/gmunc-logo.png"
               alt="GMUNC"
@@ -127,6 +138,9 @@ export default function GlobePage({ params }) {
             </div>
           </div>
           <div className="top-bar-actions">
+            {isLocked && (
+              <span className="readonly-badge">◆ View Only</span>
+            )}
             {isSynced && (
               <span className="sync-indicator" title="Real-time sync active">
                 <span className="sync-dot" />
@@ -148,7 +162,7 @@ export default function GlobePage({ params }) {
               canvasSize={760}
               hoveredCountry={hoveredCountry}
               onHoverCountry={setHoveredCountry}
-              onClickCountry={handleCountryClick}
+              onClickCountry={isLocked ? undefined : handleCountryClick}
               draggedOffsets={draggedOffsets}
               onDraggedOffsetsChange={handleDraggedOffsetsChange}
             />
@@ -171,6 +185,7 @@ export default function GlobePage({ params }) {
             onHoverCountry={setHoveredCountry}
             isMinimized={isEditorMinimized}
             onMinimizeChange={setIsEditorMinimized}
+            readOnly={isLocked}
           />
 
           <div className="region-selector-bar">

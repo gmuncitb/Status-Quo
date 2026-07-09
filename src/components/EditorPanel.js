@@ -24,7 +24,7 @@ function Flag({ code, size = 18 }) {
   );
 }
 
-export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hoveredCountry, onHoverCountry, isMinimized, onMinimizeChange }) {
+export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hoveredCountry, onHoverCountry, isMinimized, onMinimizeChange, readOnly = false }) {
   const [selectedCountry, setSelectedCountry] = useState('');
   const region = REGIONS[activeRegion];
 
@@ -111,128 +111,153 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                     <Flag code={item.countryCode} size={18} />
                     {item.countryName}
                   </span>
-                  <button
-                    className="news-card-remove"
-                    onClick={() => removeNewsItem(item.countryCode)}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
+                  {!readOnly && (
+                    <button
+                      className="news-card-remove"
+                      onClick={() => removeNewsItem(item.countryCode)}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
 
-                <textarea
-                  placeholder="Enter news summary..."
-                  value={item.newsText}
-                  onChange={(e) =>
-                    updateNewsItem(item.countryCode, 'newsText', e.target.value)
-                  }
-                />
+                {readOnly ? (
+                  <div className="news-card-text-readonly">
+                    {item.newsText || 'No news summary added.'}
+                  </div>
+                ) : (
+                  <textarea
+                    placeholder="Enter news summary..."
+                    value={item.newsText}
+                    onChange={(e) =>
+                      updateNewsItem(item.countryCode, 'newsText', e.target.value)
+                    }
+                  />
+                )}
 
-                <div className="canva-color-picker">
-                  {/* Custom Canva color picker button */}
-                  <div 
-                    className="canva-custom-color-btn"
-                    style={{ background: item.color || '#dddddd' }}
-                    title="Choose custom color"
-                  >
-                    <span className="plus-icon">+</span>
+                {!readOnly && (
+                  <div className="canva-color-picker">
+                    {/* Custom Canva color picker button */}
+                    <div 
+                      className="canva-custom-color-btn"
+                      style={{ background: item.color || '#dddddd' }}
+                      title="Choose custom color"
+                    >
+                      <span className="plus-icon">+</span>
+                      <input
+                        type="color"
+                        value={item.color && item.color.startsWith('#') && item.color.length === 7 ? item.color : '#dddddd'}
+                        onChange={(e) =>
+                          updateNewsItem(item.countryCode, 'color', e.target.value)
+                        }
+                        className="canva-native-color-input"
+                      />
+                    </div>
+
+                    {/* Preset swatches */}
+                    <div className="canva-presets-row">
+                      {CALLOUT_COLORS.map((c) => (
+                        <div
+                          key={c.id}
+                          className={`canva-color-swatch ${item.color === c.hex ? 'active' : ''}`}
+                          style={{ backgroundColor: c.hex }}
+                          title={c.label}
+                          onClick={() =>
+                            updateNewsItem(item.countryCode, 'color', c.hex)
+                          }
+                        />
+                      ))}
+                    </div>
+
+                    {/* HEX Input */}
                     <input
-                      type="color"
-                      value={item.color && item.color.startsWith('#') && item.color.length === 7 ? item.color : '#dddddd'}
-                      onChange={(e) =>
-                        updateNewsItem(item.countryCode, 'color', e.target.value)
-                      }
-                      className="canva-native-color-input"
+                      type="text"
+                      className="canva-hex-input"
+                      value={item.color || ''}
+                      placeholder="#000000"
+                      maxLength={7}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (val && !val.startsWith('#')) {
+                          val = '#' + val;
+                        }
+                        updateNewsItem(item.countryCode, 'color', val);
+                      }}
                     />
                   </div>
-
-                  {/* Preset swatches */}
-                  <div className="canva-presets-row">
-                    {CALLOUT_COLORS.map((c) => (
-                      <div
-                        key={c.id}
-                        className={`canva-color-swatch ${item.color === c.hex ? 'active' : ''}`}
-                        style={{ backgroundColor: c.hex }}
-                        title={c.label}
-                        onClick={() =>
-                          updateNewsItem(item.countryCode, 'color', c.hex)
-                        }
-                      />
-                    ))}
-                  </div>
-
-                  {/* HEX Input */}
-                  <input
-                    type="text"
-                    className="canva-hex-input"
-                    value={item.color || ''}
-                    placeholder="#000000"
-                    maxLength={7}
-                    onChange={(e) => {
-                      let val = e.target.value;
-                      if (val && !val.startsWith('#')) {
-                        val = '#' + val;
-                      }
-                      updateNewsItem(item.countryCode, 'color', val);
-                    }}
-                  />
-                </div>
+                )}
 
                 {/* Geopolitical Affected Relations Editor */}
                 <div className="affected-section">
                   <div className="affected-title">Affected Relations</div>
-                  <div className="affected-list">
-                    {(item.affected || []).map((rel) => (
-                      <div key={rel.countryCode} className="affected-item">
-                        <Flag code={rel.countryCode} size={14} />
-                        <span style={{ marginLeft: '2px', marginRight: '4px' }}>{rel.countryCode}</span>
-                        <button
-                          className={`btn-relation-toggle ${rel.type}`}
-                          onClick={() => {
-                            const nextType = rel.type === 'improve' ? 'deteriorate' : 'improve';
-                            const updatedAffected = item.affected.map((r) =>
-                              r.countryCode === rel.countryCode ? { ...r, type: nextType } : r
-                            );
-                            updateNewsItem(item.countryCode, 'affected', updatedAffected);
-                          }}
-                          title={rel.type === 'improve' ? 'Improves Relationship (Click to Deteriorate)' : 'Deteriorates Relationship (Click to Improve)'}
-                        >
-                          {rel.type === 'improve' ? '▲' : '▼'}
-                        </button>
-                        <button
-                          className="btn-relation-remove"
-                          onClick={() => {
-                            const updatedAffected = item.affected.filter((r) => r.countryCode !== rel.countryCode);
-                            updateNewsItem(item.countryCode, 'affected', updatedAffected);
-                          }}
-                          title="Remove Relation"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <select
-                    className="add-affected-select"
-                    value=""
-                    onChange={(e) => {
-                      if (!e.target.value) return;
-                      const updatedAffected = [
-                        ...(item.affected || []),
-                        { countryCode: e.target.value, type: 'improve' },
-                      ];
-                      updateNewsItem(item.countryCode, 'affected', updatedAffected);
-                    }}
-                  >
-                    <option value="">+ Add affected country...</option>
-                    {allWorldCountries
-                      .filter((c) => c.code !== item.countryCode && !(item.affected || []).some((r) => r.countryCode === c.code))
-                      .map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name} ({c.code})
-                        </option>
+                  {item.affected && item.affected.length > 0 ? (
+                    <div className="affected-list">
+                      {item.affected.map((rel) => (
+                        <div key={rel.countryCode} className="affected-item">
+                          <Flag code={rel.countryCode} size={14} />
+                          <span style={{ marginLeft: '2px', marginRight: '4px' }}>{rel.countryCode}</span>
+                          {readOnly ? (
+                            <span className={`badge-relation-readonly ${rel.type}`} title={rel.type === 'improve' ? 'Improves Relationship' : 'Deteriorates Relationship'}>
+                              {rel.type === 'improve' ? '▲' : '▼'}
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                className={`btn-relation-toggle ${rel.type}`}
+                                onClick={() => {
+                                  const nextType = rel.type === 'improve' ? 'deteriorate' : 'improve';
+                                  const updatedAffected = item.affected.map((r) =>
+                                    r.countryCode === rel.countryCode ? { ...r, type: nextType } : r
+                                  );
+                                  updateNewsItem(item.countryCode, 'affected', updatedAffected);
+                                }}
+                                title={rel.type === 'improve' ? 'Improves Relationship (Click to Deteriorate)' : 'Deteriorates Relationship (Click to Improve)'}
+                              >
+                                {rel.type === 'improve' ? '▲' : '▼'}
+                              </button>
+                              <button
+                                className="btn-relation-remove"
+                                onClick={() => {
+                                  const updatedAffected = item.affected.filter((r) => r.countryCode !== rel.countryCode);
+                                  updateNewsItem(item.countryCode, 'affected', updatedAffected);
+                                }}
+                                title="Remove Relation"
+                              >
+                                ×
+                              </button>
+                            </>
+                          )}
+                        </div>
                       ))}
-                  </select>
+                    </div>
+                  ) : readOnly ? (
+                    <div className="affected-empty-readonly">No affected relations specified.</div>
+                  ) : null}
+                  
+                  {!readOnly && (
+                    <select
+                      className="add-affected-select"
+                      value=""
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        const updatedAffected = [
+                          ...(item.affected || []),
+                          { countryCode: e.target.value, type: 'improve' },
+                        ];
+                        updateNewsItem(item.countryCode, 'affected', updatedAffected);
+                      }}
+                    >
+                      <option value="">+ Add affected country...</option>
+                      {allWorldCountries
+                        .filter((c) => c.code !== item.countryCode && !(item.affected || []).some((r) => r.countryCode === c.code))
+                        .map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.name} ({c.code})
+                          </option>
+                        ))}
+                    </select>
+                  )}
                 </div>
               </div>
             ))}
@@ -240,7 +265,7 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
         )}
 
         {/* Add Country — grid below */}
-        {availableCountries.length > 0 && (
+        {!readOnly && availableCountries.length > 0 && (
           <div className="add-country-section">
             <div className="section-title">Highlight Country</div>
             <div className="country-picker">
