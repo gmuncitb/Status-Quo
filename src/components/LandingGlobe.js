@@ -3,26 +3,20 @@
 import { useEffect, useRef } from 'react';
 import createGlobe from 'cobe';
 
-export default function LandingGlobe({ size = 600 }) {
+export default function LandingGlobe({ size = 520 }) {
   const canvasRef = useRef(null);
   const phiRef = useRef(0);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    let width = size;
-    const onResize = () => {
-      if (canvasRef.current) {
-        width = canvasRef.current.offsetWidth;
-      }
-    };
-    window.addEventListener('resize', onResize);
-    onResize();
+    // Use explicit size prop for WebGL resolution to prevent container collapse bugs (offsetWidth = 0)
+    const renderSize = size;
 
     const globe = createGlobe(canvasRef.current, {
       devicePixelRatio: 2,
-      width: width * 2,
-      height: width * 2,
+      width: renderSize * 2,
+      height: renderSize * 2,
       phi: 0,
       theta: 0.25,
       dark: 0,
@@ -47,14 +41,11 @@ export default function LandingGlobe({ size = 600 }) {
       onRender: (state) => {
         state.phi = phiRef.current;
         phiRef.current += 0.003;
-        state.width = width * 2;
-        state.height = width * 2;
       },
     });
 
     return () => {
       globe.destroy();
-      window.removeEventListener('resize', onResize);
     };
   }, [size]);
 
