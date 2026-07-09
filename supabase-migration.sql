@@ -41,7 +41,7 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
+DROP TRIGGER IF EXISTS news_items_updated_at ON news_items;
 CREATE TRIGGER news_items_updated_at
   BEFORE UPDATE ON news_items
   FOR EACH ROW
