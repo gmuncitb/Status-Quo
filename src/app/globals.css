@@ -1063,8 +1063,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 520px;
-  height: 520px;
+  width: 720px;
+  height: 720px;
   max-width: 95vw;
   max-height: 95vw;
   opacity: 0;
@@ -1075,8 +1075,8 @@ body {
   display: block;
   width: 100% !important;
   height: 100% !important;
-  max-width: 520px;
-  max-height: 520px;
+  max-width: 720px;
+  max-height: 720px;
   aspect-ratio: 1;
 }
 

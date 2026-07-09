@@ -112,7 +112,7 @@ export default function LandingPage() {
 
         {/* Globe */}
         <div className="landing-hero-globe">
-          <LandingGlobe size={520} />
+          <LandingGlobe size={720} />
         </div>
 
         {/* Overlay text */}
