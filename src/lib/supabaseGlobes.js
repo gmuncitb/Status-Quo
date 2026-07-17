@@ -97,6 +97,7 @@ export async function upsertNewsItem(globeId, region, item) {
     affected: item.affected || [],
     drag_dx: item.dragDx ?? 0,
     drag_dy: item.dragDy ?? 0,
+    news_source: item.newsSource || null,
   };
 
   const { data, error } = await supabase

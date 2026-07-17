@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import REGIONS from '@/lib/regions';
 import CALLOUT_COLORS from '@/lib/colors';
+import { NEWS_SOURCES } from '@/lib/newsSources';
 import { getFlagUrl } from '@/lib/flags';
 
 function Flag({ code, size = 18 }) {
@@ -185,6 +186,29 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                         updateNewsItem(item.countryCode, 'color', val);
                       }}
                     />
+                  </div>
+                )}
+
+                {/* News Source Selector */}
+                {!readOnly && (
+                  <div className="news-source-section" style={{ marginTop: '10px', marginBottom: '10px' }}>
+                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>News Source</div>
+                    <select
+                      className="affected-select"
+                      value={item.newsSource || ''}
+                      onChange={(e) => updateNewsItem(item.countryCode, 'newsSource', e.target.value)}
+                    >
+                      {NEWS_SOURCES.map((source) => (
+                        <option key={source.name} value={source.domain}>
+                          {source.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {readOnly && item.newsSource && (
+                  <div className="news-source-section" style={{ marginTop: '10px', marginBottom: '10px' }}>
+                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>News Source: {NEWS_SOURCES.find(s => s.domain === item.newsSource)?.name || item.newsSource}</div>
                   </div>
                 )}
 

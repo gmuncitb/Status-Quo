@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS news_items (
   affected JSONB NOT NULL DEFAULT '[]',   -- array of { countryCode, type }
   drag_dx FLOAT NOT NULL DEFAULT 0,
   drag_dy FLOAT NOT NULL DEFAULT 0,
+  news_source TEXT,
   updated_at TIMESTAMPTZ DEFAULT now(),
 
   -- Enforce one news item per country per globe
