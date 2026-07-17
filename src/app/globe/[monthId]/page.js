@@ -6,7 +6,6 @@ import EditorPanel from '@/components/EditorPanel';
 import REGIONS, { REGION_KEYS } from '@/lib/regions';
 import { toBlob } from 'html-to-image';
 import useRealtimeGlobe from '@/hooks/useRealtimeGlobe';
-import { isSupabaseConfigured } from '@/lib/supabase';
 
 // Dynamically import Globe with SSR disabled (D3 requires DOM)
 const Globe = dynamic(() => import('@/components/Globe'), { ssr: false });
@@ -139,9 +138,6 @@ export default function GlobePage({ params }) {
             </div>
           </div>
           <div className="top-bar-actions">
-            <span style={{ fontSize: '10px', background: isSupabaseConfigured() ? 'green' : 'red', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>
-              DEBUG: {isSupabaseConfigured() ? 'CONFIGURED' : 'MISSING_ENV_VARS'}
-            </span>
             {isLocked && (
               <span className="readonly-badge">◆ View Only</span>
             )}
