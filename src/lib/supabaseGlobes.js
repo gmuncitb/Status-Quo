@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 // ============================================
 // Globe CRUD
@@ -8,6 +8,7 @@ import { supabase } from './supabase';
  * Fetch all globes, sorted by month descending.
  */
 export async function fetchGlobes() {
+  const supabase = getSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('globes')
@@ -25,6 +26,7 @@ export async function fetchGlobes() {
  * Returns the globe record.
  */
 export async function getOrCreateGlobe(monthId) {
+  const supabase = getSupabase();
   if (!supabase) return null;
 
   // Try to fetch existing
@@ -55,6 +57,7 @@ export async function getOrCreateGlobe(monthId) {
  * Delete a globe and all its news items (cascading).
  */
 export async function deleteGlobe(globeId) {
+  const supabase = getSupabase();
   if (!supabase) return;
   const { error } = await supabase.from('globes').delete().eq('id', globeId);
   if (error) console.error('deleteGlobe error:', error);
@@ -68,6 +71,7 @@ export async function deleteGlobe(globeId) {
  * Fetch all news items for a globe.
  */
 export async function fetchNewsItems(globeId) {
+  const supabase = getSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('news_items')
@@ -86,6 +90,7 @@ export async function fetchNewsItems(globeId) {
  * Uses the unique constraint (globe_id, country_code) for conflict resolution.
  */
 export async function upsertNewsItem(globeId, region, item) {
+  const supabase = getSupabase();
   if (!supabase) return null;
   const row = {
     globe_id: globeId,
@@ -129,6 +134,7 @@ export async function upsertNewsItem(globeId, region, item) {
  * Delete a news item by globe_id + country_code.
  */
 export async function deleteNewsItem(globeId, countryCode) {
+  const supabase = getSupabase();
   if (!supabase) return;
   const { error } = await supabase
     .from('news_items')
@@ -143,6 +149,7 @@ export async function deleteNewsItem(globeId, countryCode) {
  * Returns a channel reference — call channel.unsubscribe() to clean up.
  */
 export function subscribeToNewsItems(globeId, onInsert, onUpdate, onDelete) {
+  const supabase = getSupabase();
   if (!supabase) return null;
 
   const channel = supabase
