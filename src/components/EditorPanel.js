@@ -25,8 +25,23 @@ function Flag({ code, size = 18 }) {
   );
 }
 
+/* Collapsible section wrapper */
+function Section({ label, defaultOpen = true, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="ep-section">
+      <button className="ep-section-toggle" onClick={() => setOpen(!open)}>
+        <span className="ep-section-label">{label}</span>
+        <span className={`ep-section-chevron ${open ? 'open' : ''}`}>›</span>
+      </button>
+      {open && <div className="ep-section-body">{children}</div>}
+    </div>
+  );
+}
+
 export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hoveredCountry, onHoverCountry, isMinimized, onMinimizeChange, readOnly = false }) {
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [countrySearch, setCountrySearch] = useState('');
   const region = REGIONS[activeRegion];
 
   // Compile full sorted list of all countries in the world for relationship mapping
@@ -46,6 +61,13 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
   const availableCountries = region.countries.filter(
     (c) => !newsItems.some((item) => item.countryCode === c.code)
   );
+
+  // Filter available countries by search
+  const filteredCountries = countrySearch
+    ? availableCountries.filter((c) =>
+        c.name.toLowerCase().includes(countrySearch.toLowerCase())
+      )
+    : availableCountries;
 
   const addNewsItem = () => {
     if (!selectedCountry) return;
@@ -78,25 +100,34 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
 
   return (
     <div className={`editor-panel ${isMinimized ? 'minimized' : ''}`}>
-      {/* Editor Panel Header (Title & Close button) */}
+      {/* Editor Panel Header */}
       <div className="editor-header-row">
-        <h2 className="editor-title">Recap Editor</h2>
+        <div className="ep-header-left">
+          <div className="ep-header-dot" />
+          <h2 className="editor-title">Editor</h2>
+        </div>
         <button 
-          className="btn btn-close" 
+          className="ep-close-btn" 
           onClick={() => onMinimizeChange(true)}
           title="Minimize Editor"
         >
-          ×
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11 3L3 11M3 3l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
         </button>
       </div>
 
       <div className="editor-panel-content">
-        {/* News Items — vertical list */}
-        <div className="section-title">Highlights — {region.name} ({newsItems.length})</div>
+        {/* Region + Count badge */}
+        <div className="ep-region-badge">
+          <span className="ep-region-name">{region.name}</span>
+          <span className="ep-count-badge">{newsItems.length}</span>
+        </div>
 
         {newsItems.length === 0 ? (
           <div className="empty-state">
-            <p>No countries highlighted.<br />Select a country below to highlight.</p>
+            <div className="ep-empty-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.2"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </div>
+            <p>No countries highlighted.<br />Click a country on the globe or select one below.</p>
           </div>
         ) : (
           <div className="news-list">
@@ -107,9 +138,11 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                 onMouseEnter={() => onHoverCountry(item.countryCode)}
                 onMouseLeave={() => onHoverCountry(null)}
               >
+                {/* Country header with colored left accent bar */}
+                <div className="ep-card-accent" style={{ backgroundColor: item.color || '#000000' }} />
                 <div className="news-card-header">
                   <span className="news-card-country">
-                    <Flag code={item.countryCode} size={18} />
+                    <Flag code={item.countryCode} size={16} />
                     {item.countryName}
                   </span>
                   {!readOnly && (
@@ -118,11 +151,12 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                       onClick={() => removeNewsItem(item.countryCode)}
                       title="Remove"
                     >
-                      ×
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
                     </button>
                   )}
                 </div>
 
+                {/* News text */}
                 {readOnly ? (
                   <div className="news-card-text-readonly">
                     {item.newsText || 'No news summary added.'}
@@ -137,31 +171,29 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                   />
                 )}
 
+                {/* Inline controls row — Color + Sources */}
                 {!readOnly && (
-                  <div className="canva-color-picker">
-                    {/* Custom Canva color picker button */}
-                    <div 
-                      className="canva-custom-color-btn"
-                      style={{ background: item.color || '#dddddd' }}
-                      title="Choose custom color"
-                    >
-                      <span className="plus-icon">+</span>
-                      <input
-                        type="color"
-                        value={item.color && item.color.startsWith('#') && item.color.length === 7 ? item.color : '#dddddd'}
-                        onChange={(e) =>
-                          updateNewsItem(item.countryCode, 'color', e.target.value)
-                        }
-                        className="canva-native-color-input"
-                      />
-                    </div>
-
-                    {/* Preset swatches */}
-                    <div className="canva-presets-row">
+                  <div className="ep-controls-row">
+                    {/* Color swatches */}
+                    <div className="ep-color-group">
+                      <div 
+                        className="ep-color-custom"
+                        style={{ background: item.color || '#dddddd' }}
+                        title="Choose custom color"
+                      >
+                        <input
+                          type="color"
+                          value={item.color && item.color.startsWith('#') && item.color.length === 7 ? item.color : '#dddddd'}
+                          onChange={(e) =>
+                            updateNewsItem(item.countryCode, 'color', e.target.value)
+                          }
+                          className="ep-color-native"
+                        />
+                      </div>
                       {CALLOUT_COLORS.map((c) => (
                         <div
                           key={c.id}
-                          className={`canva-color-swatch ${item.color === c.hex ? 'active' : ''}`}
+                          className={`ep-color-dot ${item.color === c.hex ? 'active' : ''}`}
                           style={{ backgroundColor: c.hex }}
                           title={c.label}
                           onClick={() =>
@@ -170,33 +202,16 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                         />
                       ))}
                     </div>
-
-                    {/* HEX Input */}
-                    <input
-                      type="text"
-                      className="canva-hex-input"
-                      value={item.color || ''}
-                      placeholder="#000000"
-                      maxLength={7}
-                      onChange={(e) => {
-                        let val = e.target.value;
-                        if (val && !val.startsWith('#')) {
-                          val = '#' + val;
-                        }
-                        updateNewsItem(item.countryCode, 'color', val);
-                      }}
-                    />
                   </div>
                 )}
 
-                {/* News Source Selector */}
+                {/* News Sources — compact inline */}
                 {!readOnly && (
-                  <div className="news-source-section" style={{ marginTop: '10px', marginBottom: '10px' }}>
-                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>News Sources</div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                  <div className="ep-sources-row">
+                    <span className="ep-sources-label">Sources</span>
+                    <div className="ep-sources-selects">
                       <select
-                        className="affected-select"
-                        style={{ flex: 1 }}
+                        className="ep-source-select"
                         value={(item.newsSource || '').split(',')[0] || ''}
                         onChange={(e) => {
                           const sources = (item.newsSource || '').split(',');
@@ -211,8 +226,7 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                         ))}
                       </select>
                       <select
-                        className="affected-select"
-                        style={{ flex: 1 }}
+                        className="ep-source-select"
                         value={(item.newsSource || '').split(',')[1] || ''}
                         onChange={(e) => {
                           const sources = (item.newsSource || '').split(',');
@@ -230,24 +244,22 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                   </div>
                 )}
                 {readOnly && item.newsSource && (
-                  <div className="news-source-section" style={{ marginTop: '10px', marginBottom: '10px' }}>
-                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>
-                      News Sources: {
-                        item.newsSource.split(',').map(domain => NEWS_SOURCES.find(s => s.domain === domain)?.name || domain).join(', ')
-                      }
-                    </div>
+                  <div className="ep-sources-row">
+                    <span className="ep-sources-label">Sources</span>
+                    <span className="ep-sources-readonly">
+                      {item.newsSource.split(',').map(domain => NEWS_SOURCES.find(s => s.domain === domain)?.name || domain).join(', ')}
+                    </span>
                   </div>
                 )}
 
-                {/* Geopolitical Affected Relations Editor */}
-                <div className="affected-section">
-                  <div className="affected-title">Affected Relations</div>
+                {/* Affected Relations — collapsible */}
+                <Section label="Relations" defaultOpen={!!(item.affected && item.affected.length > 0)}>
                   {item.affected && item.affected.length > 0 ? (
                     <div className="affected-list">
                       {item.affected.map((rel) => (
                         <div key={rel.countryCode} className="affected-item">
-                          <Flag code={rel.countryCode} size={14} />
-                          <span style={{ marginLeft: '2px', marginRight: '4px' }}>{rel.countryCode}</span>
+                          <Flag code={rel.countryCode} size={12} />
+                          <span className="ep-rel-code">{rel.countryCode}</span>
                           {readOnly ? (
                             <span className={`badge-relation-readonly ${rel.type}`} title={rel.type === 'improve' ? 'Improves Relationship' : 'Deteriorates Relationship'}>
                               {rel.type === 'improve' ? '▲' : '▼'}
@@ -263,7 +275,7 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                                   );
                                   updateNewsItem(item.countryCode, 'affected', updatedAffected);
                                 }}
-                                title={rel.type === 'improve' ? 'Improves Relationship (Click to Deteriorate)' : 'Deteriorates Relationship (Click to Improve)'}
+                                title={rel.type === 'improve' ? 'Click to Deteriorate' : 'Click to Improve'}
                               >
                                 {rel.type === 'improve' ? '▲' : '▼'}
                               </button>
@@ -283,7 +295,7 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                       ))}
                     </div>
                   ) : readOnly ? (
-                    <div className="affected-empty-readonly">No affected relations specified.</div>
+                    <div className="affected-empty-readonly">No relations specified.</div>
                   ) : null}
                   
                   {!readOnly && (
@@ -299,7 +311,7 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                         updateNewsItem(item.countryCode, 'affected', updatedAffected);
                       }}
                     >
-                      <option value="">+ Add affected country...</option>
+                      <option value="">+ Add relation…</option>
                       {allWorldCountries
                         .filter((c) => c.code !== item.countryCode && !(item.affected || []).some((r) => r.countryCode === c.code))
                         .map((c) => (
@@ -309,18 +321,27 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                         ))}
                     </select>
                   )}
-                </div>
+                </Section>
               </div>
             ))}
           </div>
         )}
 
-        {/* Add Country — grid below */}
+        {/* Add Country — compact search + pills */}
         {!readOnly && availableCountries.length > 0 && (
           <div className="add-country-section">
-            <div className="section-title">Highlight Country</div>
+            <div className="ep-add-header">
+              <span className="section-title" style={{ marginBottom: 0 }}>Add Country</span>
+              <input
+                type="text"
+                className="ep-country-search"
+                placeholder="Search…"
+                value={countrySearch}
+                onChange={(e) => setCountrySearch(e.target.value)}
+              />
+            </div>
             <div className="country-picker">
-              {availableCountries.map((c) => (
+              {filteredCountries.map((c) => (
                 <button
                   key={c.code}
                   className="country-pill"
@@ -334,9 +355,10 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                         color: CALLOUT_COLORS[0].hex,
                       },
                     ]);
+                    setCountrySearch('');
                   }}
                 >
-                  <Flag code={c.code} size={16} />
+                  <Flag code={c.code} size={14} />
                   <span>{c.name}</span>
                 </button>
               ))}
