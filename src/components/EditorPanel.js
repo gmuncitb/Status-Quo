@@ -192,23 +192,50 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                 {/* News Source Selector */}
                 {!readOnly && (
                   <div className="news-source-section" style={{ marginTop: '10px', marginBottom: '10px' }}>
-                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>News Source</div>
-                    <select
-                      className="affected-select"
-                      value={item.newsSource || ''}
-                      onChange={(e) => updateNewsItem(item.countryCode, 'newsSource', e.target.value)}
-                    >
-                      {NEWS_SOURCES.map((source) => (
-                        <option key={source.name} value={source.domain}>
-                          {source.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>News Sources</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select
+                        className="affected-select"
+                        style={{ flex: 1 }}
+                        value={(item.newsSource || '').split(',')[0] || ''}
+                        onChange={(e) => {
+                          const sources = (item.newsSource || '').split(',');
+                          const newSources = [e.target.value, sources[1]].filter(Boolean).join(',');
+                          updateNewsItem(item.countryCode, 'newsSource', newSources);
+                        }}
+                      >
+                        {NEWS_SOURCES.map((source) => (
+                          <option key={source.name} value={source.domain}>
+                            {source.name}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        className="affected-select"
+                        style={{ flex: 1 }}
+                        value={(item.newsSource || '').split(',')[1] || ''}
+                        onChange={(e) => {
+                          const sources = (item.newsSource || '').split(',');
+                          const newSources = [sources[0], e.target.value].filter(Boolean).join(',');
+                          updateNewsItem(item.countryCode, 'newsSource', newSources);
+                        }}
+                      >
+                        {NEWS_SOURCES.map((source) => (
+                          <option key={`2-${source.name}`} value={source.domain}>
+                            {source.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
                 {readOnly && item.newsSource && (
                   <div className="news-source-section" style={{ marginTop: '10px', marginBottom: '10px' }}>
-                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>News Source: {NEWS_SOURCES.find(s => s.domain === item.newsSource)?.name || item.newsSource}</div>
+                    <div className="affected-title" style={{ fontSize: '11px', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>
+                      News Sources: {
+                        item.newsSource.split(',').map(domain => NEWS_SOURCES.find(s => s.domain === domain)?.name || domain).join(', ')
+                      }
+                    </div>
                   </div>
                 )}
 

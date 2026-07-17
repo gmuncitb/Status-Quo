@@ -78,13 +78,13 @@ export default function LandingPage() {
             ...g,
             locked: isGlobeLocked(g.month_id),
             isCurrent: g.month_id === currentMonthId,
-          }));
+          })).filter(g => g.month_id >= '2026-07');
           setGlobes(enriched);
         } else {
-          setGlobes(generateDefaultMonths());
+          setGlobes(generateDefaultMonths().filter(g => g.month_id >= '2026-07'));
         }
       } else {
-        setGlobes(generateDefaultMonths());
+        setGlobes(generateDefaultMonths().filter(g => g.month_id >= '2026-07'));
       }
       setIsLoaded(true);
     }

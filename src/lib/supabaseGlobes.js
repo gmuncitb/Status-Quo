@@ -100,15 +100,26 @@ export async function upsertNewsItem(globeId, region, item) {
     news_source: item.newsSource || null,
   };
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('news_items')
     .upsert(row, { onConflict: 'globe_id,country_code' })
     .select()
     .single();
 
   if (error) {
-    console.error('upsertNewsItem error:', error);
-    return null;
+    console.warn('upsertNewsItem error (likely missing news_source column). Falling back without news_source:', error.message);
+    const { news_source, ...fallbackRow } = row;
+    const fallbackResult = await supabase
+      .from('news_items')
+      .upsert(fallbackRow, { onConflict: 'globe_id,country_code' })
+      .select()
+      .single();
+    
+    if (fallbackResult.error) {
+      console.error('upsertNewsItem fallback completely failed:', fallbackResult.error);
+      return null;
+    }
+    data = fallbackResult.data;
   }
   return data;
 }

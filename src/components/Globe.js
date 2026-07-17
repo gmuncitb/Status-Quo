@@ -579,19 +579,23 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
                 )}
                 <div className="callout-box-title">{item.countryName}</div>
                 {item.newsSource && (
-                  <img 
-                    src={`https://logo.clearbit.com/${item.newsSource}?size=64`} 
-                    alt=""
-                    style={{
-                      marginLeft: 'auto',
-                      height: 12,
-                      objectFit: 'contain',
-                      borderRadius: 2
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    {item.newsSource.split(',').filter(Boolean).map(domain => (
+                      <img 
+                        key={domain}
+                        src={`https://logo.clearbit.com/${domain}?size=64`} 
+                        alt=""
+                        style={{
+                          height: 12,
+                          objectFit: 'contain',
+                          borderRadius: 2
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
               <div className="callout-box-text">{item.newsText}</div>
