@@ -579,19 +579,27 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
                 )}
                 <div className="callout-box-title">{item.countryName}</div>
                 {item.newsSource && (
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                     {item.newsSource.split(',').filter(Boolean).map(domain => (
                       <img 
                         key={domain}
-                        src={`https://logo.clearbit.com/${domain}?size=64`} 
+                        src={`https://logos.hunter.io/${domain}`} 
                         alt=""
                         style={{
                           height: 12,
+                          maxHeight: 12,
+                          width: 'auto',
                           objectFit: 'contain',
-                          borderRadius: 2
+                          borderRadius: 2,
+                          flexShrink: 0
                         }}
                         onError={(e) => {
-                          e.target.style.display = 'none';
+                          if (!e.target.dataset.fallback) {
+                            e.target.dataset.fallback = 'true';
+                            e.target.src = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+                          } else {
+                            e.target.style.display = 'none';
+                          }
                         }}
                       />
                     ))}
