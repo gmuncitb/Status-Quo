@@ -272,5 +272,6 @@ function rowToItem(row) {
     affected: row.affected || [],
     dragDx: row.drag_dx || 0,
     dragDy: row.drag_dy || 0,
+    newsSource: row.news_source || null,
   };
 }
