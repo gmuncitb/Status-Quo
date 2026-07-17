@@ -6,6 +6,7 @@ import EditorPanel from '@/components/EditorPanel';
 import REGIONS, { REGION_KEYS } from '@/lib/regions';
 import { toBlob } from 'html-to-image';
 import useRealtimeGlobe from '@/hooks/useRealtimeGlobe';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 // Dynamically import Globe with SSR disabled (D3 requires DOM)
 const Globe = dynamic(() => import('@/components/Globe'), { ssr: false });
