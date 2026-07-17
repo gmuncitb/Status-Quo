@@ -42,7 +42,15 @@ function Section({ label, defaultOpen = true, children }) {
 export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hoveredCountry, onHoverCountry, isMinimized, onMinimizeChange, readOnly = false }) {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [countrySearch, setCountrySearch] = useState('');
+  const [expandedCards, setExpandedCards] = useState({});
   const region = REGIONS[activeRegion];
+
+  const toggleCard = (countryCode) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [countryCode]: prev[countryCode] === false ? true : false
+    }));
+  };
 
   // Compile full sorted list of all countries in the world for relationship mapping
   const allWorldCountries = useMemo(() => {
@@ -131,9 +139,11 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
           </div>
         ) : (
           <div className="news-list">
-            {newsItems.map((item) => (
+            {newsItems.map((item) => {
+              const isExpanded = expandedCards[item.countryCode] !== false;
+              return (
               <div
-                className={`news-card ${hoveredCountry === item.countryCode ? 'hovered' : ''}`}
+                className={`news-card ${hoveredCountry === item.countryCode ? 'hovered' : ''} ${!isExpanded ? 'collapsed' : ''}`}
                 key={item.countryCode}
                 onMouseEnter={() => onHoverCountry(item.countryCode)}
                 onMouseLeave={() => onHoverCountry(null)}
@@ -141,9 +151,10 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                 {/* Country header with colored left accent bar */}
                 <div className="ep-card-accent" style={{ backgroundColor: item.color || '#000000' }} />
                 <div className="news-card-header">
-                  <span className="news-card-country">
+                  <span className="news-card-country" onClick={() => toggleCard(item.countryCode)} style={{ cursor: 'pointer', flex: 1 }}>
                     <Flag code={item.countryCode} size={16} />
                     {item.countryName}
+                    <span className={`ep-card-chevron ${isExpanded ? 'open' : ''}`}>›</span>
                   </span>
                   {!readOnly && (
                     <button
@@ -156,6 +167,8 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                   )}
                 </div>
 
+                {isExpanded && (
+                  <>
                 {/* News text */}
                 {readOnly ? (
                   <div className="news-card-text-readonly">
@@ -322,8 +335,10 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                     </select>
                   )}
                 </Section>
+                </>
+                )}
               </div>
-            ))}
+            )})}
           </div>
         )}
 

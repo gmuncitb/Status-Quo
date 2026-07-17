@@ -499,6 +499,22 @@ body {
   margin-bottom: 8px;
 }
 
+.news-card.collapsed .news-card-header {
+  margin-bottom: 0;
+}
+
+.ep-card-chevron {
+  font-size: 14px;
+  color: var(--color-grey-400);
+  transition: transform 200ms ease;
+  display: inline-block;
+  margin-left: 6px;
+}
+
+.ep-card-chevron.open {
+  transform: rotate(90deg);
+}
+
 .news-card-country {
   display: flex;
   align-items: center;
