@@ -151,16 +151,19 @@ export default function EditorPanel({ activeRegion, newsItems, onNewsChange, hov
                 {/* Country header with colored left accent bar */}
                 <div className="ep-card-accent" style={{ backgroundColor: item.color || '#000000' }} />
                 <div className="news-card-header">
-                  <span className="news-card-country" onClick={() => toggleCard(item.countryCode)} style={{ cursor: 'pointer', flex: 1 }}>
+                  <span className="news-card-country" onClick={() => toggleCard(item.countryCode)} style={{ cursor: 'pointer', flex: 1 }} role="button" aria-expanded={isExpanded}>
                     <Flag code={item.countryCode} size={16} />
                     {item.countryName}
-                    <span className={`ep-card-chevron ${isExpanded ? 'open' : ''}`}>›</span>
+                    <span className={`ep-card-chevron ${isExpanded ? 'open' : ''}`}>
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
                   </span>
                   {!readOnly && (
                     <button
                       className="news-card-remove"
                       onClick={() => removeNewsItem(item.countryCode)}
                       title="Remove"
+                      aria-label={`Remove ${item.countryName}`}
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
                     </button>

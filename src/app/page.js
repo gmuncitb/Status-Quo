@@ -111,8 +111,6 @@ export default function LandingPage() {
     <div className="landing-root">
       {/* Hero Section */}
       <section className="landing-hero">
-        {/* Ambient glow */}
-        <div className="landing-hero-glow" />
 
         {/* Navigation */}
         <nav className="landing-nav">
@@ -128,18 +126,20 @@ export default function LandingPage() {
         </div>
 
         {/* Overlay text */}
-        <div className="landing-hero-content">
-          <h1 className="landing-hero-title">STATUS QUO</h1>
+        <header className="landing-hero-content">
+          <h1 className="landing-hero-title">Status Quo</h1>
           <p className="landing-hero-subtitle">
             A Monthly Macro-Recap of World Affairs
           </p>
           <p className="landing-hero-org">by GMUNC</p>
-        </div>
+        </header>
 
         {/* Scroll indicator */}
         <div className="landing-scroll-indicator">
           <span>Select an Edition</span>
-          <div className="landing-scroll-arrow">↓</div>
+          <div className="landing-scroll-arrow">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
         </div>
       </section>
 
@@ -160,13 +160,14 @@ export default function LandingPage() {
                 className={`landing-edition-card ${isCurrent ? 'current' : ''} ${locked ? 'locked' : ''}`}
                 onClick={() => handleOpenGlobe(globe.month_id)}
                 style={{ animationDelay: `${idx * 80}ms` }}
+                aria-label={`${locked ? 'View' : 'Edit'} ${getMonthLabel(globe.month_id)}`}
               >
                 <div className="edition-card-month">
                   {getMonthLabel(globe.month_id)}
                 </div>
                 <div className={`edition-card-badge ${locked ? 'badge-locked' : 'badge-live'}`}>
                   {locked ? (
-                    <><span className="badge-icon">◆</span> View Only</>
+                    <><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style={{opacity: 0.5, flexShrink: 0}}><path d="M12 7V5a4 4 0 0 0-8 0v2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM6 5a2 2 0 1 1 4 0v2H6V5z"/></svg> View Only</>
                   ) : isCurrent ? (
                     <><span className="badge-dot" /> Live — Edit</>
                   ) : (
@@ -174,7 +175,7 @@ export default function LandingPage() {
                   )}
                 </div>
                 <div className="edition-card-action">
-                  {locked ? 'View →' : 'Edit →'}
+                  {locked ? 'View' : 'Edit'}
                 </div>
               </button>
             );

@@ -1,50 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600;6..72,700&family=Roboto:wght@300;400;500;700&display=swap');
-
 /* ============================================
-   GMUNC Status Quo — Premium Grayscale Design
-   Minimalist Light Mode | Helvetica | Grayscale
+   GMUNC Status Quo — Editorial Grayscale
+   Newsreader + Roboto | Light Mode | Monochrome
    ============================================ */
 
 :root {
-  --color-black: #000000;
+  /* ── Grayscale Palette ── */
+  --color-black: #0a0a0a;
   --color-dark: #111111;
-  --color-grey-900: #1c1c1c;
-  --color-grey-800: #2e2e2e;
-  --color-grey-700: #454545;
-  --color-grey-600: #626262;
-  --color-grey-500: #7e7e7e;
-  --color-grey-400: #9b9b9b;
-  --color-grey-300: #b8b8b8;
-  --color-grey-200: #e0e0e0;
-  --color-grey-100: #f0f0f0;
-  --color-grey-50: #f7f7f7;
+  --color-grey-900: #1c1c1e;
+  --color-grey-800: #2c2c2e;
+  --color-grey-700: #48484a;
+  --color-grey-600: #636366;
+  --color-grey-500: #8e8e93;
+  --color-grey-400: #aeaeb2;
+  --color-grey-300: #c7c7cc;
+  --color-grey-200: #d1d1d6;
+  --color-grey-100: #e5e5ea;
+  --color-grey-50: #f2f2f7;
   --color-white: #ffffff;
-  
-  /* Background warm white for premium paper-like texture */
-  --color-bg: #fafafa;
-  --color-border: #e8e8e8;
 
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  /* ── Semantic Surfaces ── */
+  --color-bg: #f8f8fa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-border: #e2e2e7;
+  --color-border-strong: #c7c7cc;
+
+  /* ── Semantic Text ── */
+  --color-text-primary: #111111;
+  --color-text-secondary: #636366;
+  --color-text-muted: #8e8e93;
+  --color-text-ghost: #aeaeb2;
+
+  /* ── Semantic Status (grayscale-safe) ── */
+  --color-success: #2d9d4e;
+  --color-danger: #c4342d;
+
+  /* ── Typography ── */
+  --font-heading: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+
+  --font-size-2xs: 9px;
   --font-size-xs: 11px;
   --font-size-sm: 13px;
   --font-size-base: 14px;
   --font-size-md: 16px;
   --font-size-lg: 20px;
-  
+  --font-size-xl: 28px;
+  --font-size-2xl: 40px;
+  --font-size-display: clamp(40px, 6vw, 72px);
+
+  /* ── Spacing Scale (strict 4/8 rhythm) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --space-10: 64px;
+  --space-12: 80px;
+
+  /* ── Radii ── */
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 16px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.08);
+  /* ── Elevation ── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-panel: 0 1px 0 rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.06);
 
-  --transition-fast: 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --transition-normal: 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* ── Motion ── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Reset */
@@ -64,9 +99,9 @@ html {
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   font-size: var(--font-size-base);
-  color: var(--color-dark);
+  color: var(--color-text-primary);
   background-color: var(--color-bg);
   line-height: 1.5;
   min-height: 100vh;
@@ -129,14 +164,15 @@ body {
 }
 
 .top-bar-logo:hover {
-  transform: rotate(5deg) scale(1.05);
+  opacity: 0.7;
 }
 
 .top-bar-title h1 {
-  font-size: 13px;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-sm);
   font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--color-black);
+  letter-spacing: 0.1em;
+  color: var(--color-text-primary);
   text-transform: uppercase;
 }
 
@@ -175,16 +211,7 @@ body {
   overflow: hidden;
 }
 
-.globe-area::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.01) 0%, transparent 70%);
-  pointer-events: none;
-}
+/* Globe area — no decorative pseudo-element */
 
 .globe-canvas {
   position: relative;
@@ -200,30 +227,21 @@ body {
 
 .editor-panel {
   position: absolute;
-  top: 16px;
-  bottom: 16px;
-  left: 16px;
+  top: var(--space-4);
+  bottom: var(--space-4);
+  left: var(--space-4);
   width: 320px;
-  background-color: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(40px) saturate(1.4);
-  -webkit-backdrop-filter: blur(40px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 14px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 0;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.04),
-    0 8px 32px rgba(0, 0, 0, 0.08),
-    0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-panel);
   z-index: 100;
   display: flex;
   flex-direction: column;
-  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease;
+  transition: transform var(--transition-slow), opacity var(--transition-normal);
   transform: translateX(0);
   overflow: hidden;
-}
-
-.editor-panel:hover {
-  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .editor-panel.minimized {
@@ -471,11 +489,11 @@ body {
 .news-card {
   width: 100%;
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
-  padding: 10px 12px 10px 16px;
-  background: rgba(255, 255, 255, 0.55);
-  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast);
   overflow: hidden;
 }
 
@@ -554,23 +572,22 @@ body {
 .news-card textarea {
   width: 100%;
   min-height: 60px;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-family: var(--font-family);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-body);
   font-size: 12px;
-  color: var(--color-dark);
+  color: var(--color-text-primary);
   resize: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color var(--transition-fast);
   line-height: 1.5;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: var(--color-grey-50);
 }
 
 .news-card textarea:focus {
   outline: none;
-  border-color: rgba(0, 0, 0, 0.2);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
-  background-color: rgba(255, 255, 255, 0.9);
+  border-color: var(--color-border-strong);
+  background-color: var(--color-surface);
 }
 
 /* ── Inline controls row ── */
@@ -601,7 +618,7 @@ body {
 }
 
 .ep-color-custom:hover {
-  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--color-grey-400);
 }
 
 .ep-color-native {
@@ -627,11 +644,10 @@ body {
 }
 
 .ep-color-dot:hover {
-  transform: scale(1.2);
+  box-shadow: 0 0 0 2px var(--color-grey-400);
 }
 
 .ep-color-dot.active {
-  transform: scale(1.15);
   box-shadow: 0 0 0 1.5px var(--color-white), 0 0 0 2.5px var(--color-dark);
 }
 
@@ -757,11 +773,9 @@ body {
 }
 
 .country-pill:hover {
-  border-color: var(--color-dark);
+  border-color: var(--color-border-strong);
   color: var(--color-dark);
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: var(--color-surface);
 }
 
 .country-pill .flag-icon {
@@ -835,79 +849,7 @@ body {
   line-height: 1.5;
 }
 
-/* ============================================
-   Splash Screen
-   ============================================ */
-
-.splash-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: var(--color-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity var(--transition-slow), transform var(--transition-slow);
-}
-
-.splash-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  opacity: 0;
-  transform: scale(0.97);
-  transition: all var(--transition-slow);
-}
-
-.splash-logo {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
-  filter: grayscale(1) contrast(1.1);
-}
-
-.splash-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.splash-title {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--color-black);
-}
-
-.splash-subtitle {
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--color-grey-400);
-  text-transform: uppercase;
-}
-
-/* Phase classes */
-.splash-enter .splash-content {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.splash-hold .splash-content {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.splash-exit {
-  opacity: 0;
-  transform: translateY(-24px);
-  pointer-events: none;
-}
+/* Splash screen removed — dead code cleanup */
 
 /* ============================================
    Floating Callout Boxes on Globe
@@ -990,26 +932,14 @@ body {
 .callout-dot::after {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 1px solid currentColor;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 0.5;
-  animation: pulse 2s infinite ease-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(0.6);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.8);
-    opacity: 0;
-  }
+  transform: translate(-50%, -50%);
+  opacity: 0.3;
 }
 
 .globe-land {
@@ -1156,52 +1086,40 @@ body {
 }
 
 /* ============================================
-   Canva-style Color Picker
-   ============================================ */
-
-/* Legacy canva color picker classes — kept for backward compat but unused in new editor */
-.canva-color-picker { display: none; }
-
-/* ============================================
    Real-time Sync Indicator
    ============================================ */
 
 .sync-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: var(--space-1);
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  color: #27ae60;
+  color: var(--color-text-secondary);
   letter-spacing: 0.03em;
-  padding: 4px 10px;
-  background-color: rgba(46, 204, 113, 0.08);
-  border: 1px solid rgba(46, 204, 113, 0.2);
-  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-grey-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
 }
 
 .sync-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #27ae60;
-  animation: sync-pulse 2s ease-in-out infinite;
-}
-
-@keyframes sync-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
+  background-color: var(--color-text-secondary);
 }
 
 /* ============================================
-   Landing Page — Immersive Light Theme (Grayscale)
+   Landing Page — Editorial Grayscale
    ============================================ */
 
 .landing-root {
-  background-color: var(--color-bg); /* #fafafa */
-  color: var(--color-dark); /* #111111 */
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
   min-height: 100vh;
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-body);
   overflow-x: hidden;
 }
 
@@ -1215,19 +1133,6 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
-
-.landing-hero-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 700px;
-  height: 700px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.005) 40%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
 }
 
 .landing-hero-globe {
@@ -1266,32 +1171,31 @@ body {
 }
 
 .landing-hero-title {
-  font-family: 'Newsreader', serif;
-  font-size: 64px;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-display);
   font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--color-black); /* #000000 */
-  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.8);
-  margin-bottom: 12px;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-black);
+  margin-bottom: var(--space-3);
+  line-height: 0.95;
 }
 
 .landing-hero-subtitle {
-  font-family: 'Roboto', sans-serif;
-  font-size: 16px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-md);
   font-weight: 300;
-  letter-spacing: 0.06em;
-  color: var(--color-grey-600); /* #626262 */
-  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
 }
 
 .landing-hero-org {
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--color-grey-400); /* #9b9b9b */
+  color: var(--color-text-muted);
 }
 
 /* ── Navigation ── */
@@ -1324,11 +1228,11 @@ body {
 }
 
 .landing-nav-brand {
-  font-family: 'Newsreader', serif;
-  font-size: 16px;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-md);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--color-dark);
+  letter-spacing: 0.04em;
+  color: var(--color-text-primary);
 }
 
 /* ── Scroll Indicator ── */
@@ -1354,14 +1258,8 @@ body {
 }
 
 .landing-scroll-arrow {
-  font-size: 16px;
-  color: var(--color-grey-500);
-  animation: landing-bounce 2s ease-in-out infinite;
-}
-
-@keyframes landing-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(6px); }
+  font-size: 14px;
+  color: var(--color-text-ghost);
 }
 
 /* ── Editions Section ── */
@@ -1380,12 +1278,12 @@ body {
 }
 
 .landing-editions-header h2 {
-  font-family: 'Newsreader', serif;
-  font-size: 32px;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  color: var(--color-black);
-  letter-spacing: 0.02em;
-  margin-bottom: 8px;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-2);
 }
 
 .landing-editions-header p {
@@ -1421,9 +1319,7 @@ body {
 
 .landing-edition-card:hover {
   background-color: var(--color-grey-50);
-  border-color: var(--color-grey-300);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-strong);
 }
 
 .landing-edition-card.current {
@@ -1436,11 +1332,11 @@ body {
 }
 
 .edition-card-month {
-  font-family: 'Newsreader', serif;
-  font-size: 18px;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  color: var(--color-black);
-  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .edition-card-badge {
@@ -1472,7 +1368,6 @@ body {
   height: 6px;
   border-radius: 50%;
   background-color: var(--color-black);
-  animation: sync-pulse 2s ease-in-out infinite;
 }
 
 .badge-dot-open {
@@ -1500,18 +1395,18 @@ body {
 
 .landing-create-btn {
   display: block;
-  margin: 32px auto 0;
-  padding: 12px 28px;
+  margin: var(--space-6) auto 0;
+  padding: var(--space-3) var(--space-5);
   background-color: transparent;
-  border: 1px dashed var(--color-grey-300);
-  border-radius: 12px;
-  color: var(--color-grey-500);
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   letter-spacing: 0.03em;
   cursor: pointer;
-  transition: all 250ms ease;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .landing-create-btn:hover {
@@ -1610,15 +1505,15 @@ body {
 .readonly-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  color: #888888;
+  color: var(--color-text-muted);
   letter-spacing: 0.03em;
-  padding: 4px 10px;
-  background-color: rgba(128, 128, 128, 0.08);
-  border: 1px solid rgba(128, 128, 128, 0.2);
-  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-grey-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
 }
 
 .top-bar-back {
@@ -1681,7 +1576,21 @@ body {
 
 .affected-empty-readonly {
   font-size: var(--font-size-xs);
-  color: var(--color-grey-500);
+  color: var(--color-text-muted);
   font-style: italic;
-  margin-top: 6px;
+  margin-top: var(--space-2);
+}
+
+/* ============================================
+   Accessibility: Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
