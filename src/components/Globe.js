@@ -154,23 +154,31 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
     const startRotation = [...rotation];
     const startScale = scale;
 
-    const duration = 750; // ms
+    const duration = 800; // ms
     const startTime = performance.now();
     let animId;
 
-    // Helper for shortest path rotation interpolation
+    // Helper for shortest path angle interpolation across the 180/-180 meridian
+    const interpolateAngle = (start, end, t) => {
+      let diff = (end - start) % 360;
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+      return start + diff * t;
+    };
+
     const interpolateRotation = (start, end, t) => {
       return [
-        start[0] + (end[0] - start[0]) * t,
-        start[1] + (end[1] - start[1]) * t,
-        start[2] + (end[2] - start[2]) * t
+        interpolateAngle(start[0], end[0], t),
+        interpolateAngle(start[1], end[1], t),
+        interpolateAngle(start[2] || 0, end[2] || 0, t)
       ];
     };
 
     const animate = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3); // Cubic Out
+      // Quintic Out easing for buttery smooth deceleration
+      const ease = 1 - Math.pow(1 - progress, 4);
 
       const nextRotation = interpolateRotation(startRotation, targetRotation, ease);
       const nextScale = startScale + (targetScale - startScale) * ease;
