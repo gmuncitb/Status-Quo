@@ -477,6 +477,7 @@ body {
   background: rgba(255, 255, 255, 0.55);
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .news-card:hover, .news-card.hovered {
