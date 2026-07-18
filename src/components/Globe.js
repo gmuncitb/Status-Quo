@@ -18,7 +18,7 @@ function resolveCollisions(items, boxWidth = 160, defaultHeight = 44, canvasSize
 
   const adjusted = items.map((item) => ({ 
     ...item, 
-    height: item.affected && item.affected.length > 0 ? 66 : 44, // Expand box collision height if relationships are present
+    height: item.newsSource ? 66 : 44, // Expand box collision height if news sources are present at bottom
     adjX: item.x, 
     adjY: item.y 
   }));
@@ -586,64 +586,64 @@ export default function Globe({ region, newsItems, canvasSize = 760, hoveredCoun
                   />
                 )}
                 <div className="callout-box-title">{item.countryName}</div>
-                {item.newsSource && (
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                    {item.newsSource.split(',').filter(Boolean).map(domain => (
-                      <img 
-                        key={domain}
-                        src={`https://logos.hunter.io/${domain}`} 
-                        alt=""
-                        style={{
-                          height: 12,
-                          maxHeight: 12,
-                          width: 'auto',
-                          objectFit: 'contain',
-                          borderRadius: 2,
-                          flexShrink: 0
-                        }}
-                        onError={(e) => {
-                          if (!e.target.dataset.fallback) {
-                            e.target.dataset.fallback = 'true';
-                            e.target.src = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
-                          } else {
-                            e.target.style.display = 'none';
-                          }
-                        }}
-                      />
-                    ))}
+                {item.affected && item.affected.length > 0 && (
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
+                    {item.affected.map((rel) => {
+                      const relFlagUrl = getFlagUrl(rel.countryCode);
+                      return (
+                        <div
+                          key={rel.countryCode}
+                          className={`callout-rel-pill ${rel.type}`}
+                          title={`${rel.countryCode} relationship ${rel.type === 'improve' ? 'improves' : 'deteriorates'}`}
+                        >
+                          {relFlagUrl && (
+                            <img
+                              src={relFlagUrl}
+                              alt=""
+                              style={{
+                                width: 12,
+                                height: 8.5,
+                                objectFit: 'cover',
+                                borderRadius: 0.5,
+                                flexShrink: 0,
+                              }}
+                            />
+                          )}
+                          <span className="callout-rel-arrow">
+                            {rel.type === 'improve' ? '▲' : '▼'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
               <div className="callout-box-text">{item.newsText}</div>
-              {item.affected && item.affected.length > 0 && (
-                <div className="callout-relations">
-                  {item.affected.map((rel) => {
-                    const relFlagUrl = getFlagUrl(rel.countryCode);
-                    return (
-                      <div
-                        key={rel.countryCode}
-                        className={`callout-rel-pill ${rel.type}`}
-                        title={`${rel.countryCode} relationship ${rel.type === 'improve' ? 'improves' : 'deteriorates'}`}
-                      >
-                        {relFlagUrl && (
-                          <img
-                            src={relFlagUrl}
-                            alt=""
-                            style={{
-                              width: 12,
-                              height: 8.5,
-                              objectFit: 'cover',
-                              borderRadius: 0.5,
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                        <span className="callout-rel-arrow">
-                          {rel.type === 'improve' ? '▲' : '▼'}
-                        </span>
-                      </div>
-                    );
-                  })}
+              {item.newsSource && (
+                <div className="callout-sources" style={{ marginTop: '6px', paddingTop: '4px', borderTop: '1px solid rgba(0, 0, 0, 0.05)', display: 'flex', gap: '4px', alignItems: 'center', justifyContent: 'flex-end' }}>
+                  {item.newsSource.split(',').filter(Boolean).map(domain => (
+                    <img 
+                      key={domain}
+                      src={`https://logos.hunter.io/${domain}`} 
+                      alt=""
+                      style={{
+                        height: 12,
+                        maxHeight: 12,
+                        width: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: 2,
+                        flexShrink: 0
+                      }}
+                      onError={(e) => {
+                        if (!e.target.dataset.fallback) {
+                          e.target.dataset.fallback = 'true';
+                          e.target.src = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+                        } else {
+                          e.target.style.display = 'none';
+                        }
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>
