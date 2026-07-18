@@ -206,7 +206,7 @@ export default function GlobePage({ params }) {
       <div style={{ position: 'absolute', top: -9999, left: -9999, pointerEvents: 'none' }}>
         <div id="globe-export-target" style={{ width: 1140, height: 1140, background: 'transparent', position: 'relative' }}>
           <Globe
-            region={region}
+            region={{ ...region, scale: Math.min(region.scale || 1.38, 1.40) }}
             newsItems={newsItems}
             canvasSize={1140}
             hoveredCountry={null}
