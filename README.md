@@ -29,11 +29,12 @@ Here is everything the team can do on the website:
 - **Hover Syncing:** Hovering over a country on the globe automatically highlights its news card in the editor panel, and vice-versa.
 - **Dynamic Country Flags:** Flags are rendered inline inside news headers, country lists, and callout boxes for visual clarity.
 
-### 4. Canva-Style Color Customizer
+### 4. Canva-Style Color Customizer & News Sources
 - **Preset Swatches:** Apply pre-curated grayscale and accent swatches to country fills.
 - **Native Color Wheel (`+` Button):** Click the `+` button to open a native color spectrum picker.
 - **HEX Input:** Copy/paste or manually type hexadecimal color codes directly to change the country fill.
-- **Automatic Clean-up:** Unselecting a country immediately resets its color back to default.
+- **News Source Tagging:** Assign publication sources (e.g., AP, BBC, Reuters) to a news card. The source's logo will automatically render on the country's globe callout box.
+- **Automatic Clean-up:** Unselecting a country immediately resets its color and sources back to default.
 
 ### 5. Geopolitical Relationship Mapping ("Affected Relations")
 - **Define Connections:** Connect the primary highlighted country with other affected countries globally.
@@ -67,8 +68,9 @@ Use the region bar at the bottom of the editor workspace to select the focus are
 - Click a country directly on the 3D globe, or select it from the **"Highlight Country"** list at the bottom of the editor panel.
 - A card will appear in the editor, and a callout box will appear on the globe.
 
-### Step 4: Add News & Customize Colors
+### Step 4: Add News, Sources, & Customize Colors
 - Type the macro-recap summary in the text box.
+- Tag up to two **News Sources** (e.g., AP, Reuters) for the recap.
 - Use the Canva-style color picker on the card to set the country's highlight color.
 
 ### Step 5: Adjust Callout Positions
@@ -107,3 +109,15 @@ If credentials are not provided, the application automatically falls back to an 
 
 ### Database Migration
 If setting up a new Supabase backend, run the SQL schema defined in [supabase-migration.sql](supabase-migration.sql) inside the Supabase SQL Editor. This initializes the `globes` and `news_items` tables, configures automated Row-Level Security (RLS) policies, and registers realtime replication.
+
+### Cloudflare Deployment
+This project is configured to be deployed on **Cloudflare Workers** using the `@opennextjs/cloudflare` OpenNext adapter.
+
+1. Authenticate with Cloudflare using Wrangler:
+   ```bash
+   npx wrangler login
+   ```
+2. Build and deploy directly to your Cloudflare Worker:
+   ```bash
+   npm run deploy
+   ```

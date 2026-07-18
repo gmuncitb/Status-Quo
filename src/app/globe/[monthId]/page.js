@@ -126,9 +126,7 @@ export default function GlobePage({ params }) {
         {/* Top bar */}
         <div className="top-bar">
           <div className="top-bar-left">
-            <a href="/" className="top-bar-back" title="Back to editions" aria-label="Back to editions">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </a>
+            <a href="/" className="top-bar-back" title="Back to editions">←</a>
             <img
               src="/gmunc-logo.png"
               alt="GMUNC"
@@ -141,10 +139,7 @@ export default function GlobePage({ params }) {
           </div>
           <div className="top-bar-actions">
             {isLocked && (
-              <span className="readonly-badge">
-                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style={{opacity: 0.5}}><path d="M12 7V5a4 4 0 0 0-8 0v2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM6 5a2 2 0 1 1 4 0v2H6V5z"/></svg>
-                View Only
-              </span>
+              <span className="readonly-badge">◆ View Only</span>
             )}
             {isSynced && (
               <span className="sync-indicator" title="Real-time sync active">
@@ -152,9 +147,8 @@ export default function GlobePage({ params }) {
                 Live
               </span>
             )}
-            <button className="btn" onClick={handleExport} aria-label="Export as PNG">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Export
+            <button className="btn" onClick={handleExport}>
+              ↓ Export PNG
             </button>
           </div>
         </div>
@@ -179,7 +173,7 @@ export default function GlobePage({ params }) {
               className="btn btn-primary btn-minimize-floating" 
               onClick={() => setIsEditorMinimized(false)}
             >
-              Open Editor
+              → Open Editor
             </button>
           )}
 
