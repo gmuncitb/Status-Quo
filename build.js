@@ -7,7 +7,7 @@ if (process.env.OPENNEXT_BUILDING) {
 } else {
   // We are running the build command from outside (e.g. Cloudflare CI or local npm run build)
   console.log("=== OpenNext Wrapper: Initiating Cloudflare Bundle ===");
-  execSync("npx opennextjs-cloudflare build", { 
+  execSync("npx @opennextjs/cloudflare build", { 
     stdio: "inherit",
     env: { ...process.env, OPENNEXT_BUILDING: "true" }
   });
